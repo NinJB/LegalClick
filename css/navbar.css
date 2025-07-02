@@ -1,0 +1,224 @@
+* {
+    margin: 0em;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+.nav-logo{
+    width: 3em;
+    transition: 0.3s ease-in-out;
+    background-color: #ffffff;
+    border-radius: 5em;
+}
+
+.nav-logo:hover{
+    background-color: #f1f1f1;
+    border-radius: 5em;
+}
+
+.icon-img{
+    width: 4em;
+}
+  
+  .layout {
+    display: flex;
+  }
+  
+.top-nav {
+    z-index: 1000;
+    position: relative;
+    width: 100%;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: linear-gradient(to right, rgb(250, 127, 26), #ffe46a);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0 1.5rem;
+    z-index: 1000;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  
+  .top-nav__right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .profile-wrapper {
+    position: relative;
+    cursor: pointer;
+  }
+  
+  .profile-menu {
+    position: absolute;
+    top: 120%;
+    right: 0;
+    background-color: white;
+    border-radius: 6px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    padding: 0.5rem 0;
+    display: flex;
+    flex-direction: column;
+    width: 160px;
+  }
+  
+  .profile-menu a {
+    padding: 0.5rem 1rem;
+    color: #333;
+    text-decoration: none;
+  }
+  
+  .profile-menu a:hover {
+    background-color: rgb(250, 127, 26);
+    color: white;
+  }
+  
+  .side-nav {
+    width: 4em;
+    background-color: #fafafa;
+    padding-top: 60px;
+    height: 100vh;
+    box-shadow: 2px 0 6px rgba(0,0,0,0.05);
+    position: fixed;
+    top: 0;
+    left: 0;
+  }
+  
+  .side-nav nav {
+    display: flex;
+    flex-direction: column;
+    padding-top: 1em;
+  }
+  
+  .side-nav a {
+    padding: 0;
+    text-decoration: none;
+    color: #444;
+    font-weight: 500;
+    transition: background-color 0.3s;
+    margin-top: 1em;
+  }
+  
+  .side-nav a:hover {
+    background-color: rgb(255, 239, 210);
+    color: white;
+  }
+
+#sign-up{
+    background-color: rgb(250, 127, 26);
+    color: #fafafa;
+    border-radius: 5em;
+    border: 1px solid rgb(250, 127, 26);
+    padding: 1em;
+    margin-right: -5em;
+    transition: transform 0.5s ease;
+    margin-left: 70em;
+}
+
+#sign-up:hover{
+    background-color: #fafafa;
+    color: rgb(250, 127, 26);
+}
+
+#log-in{
+    background-color: rgb(250, 127, 26);
+    color: #fafafa;
+    border-radius: 5em;
+    border: 1px solid rgb(250, 127, 26);
+    padding: 1em;
+    transition: transform 0.5s ease;
+}
+
+#log-in:hover{
+    background-color: #fafafa;
+    color: rgb(250, 127, 26);
+}
+
+.white-logo {
+    width: 10em;
+    margin: 0;
+    padding: 0;
+    justify-self: center;
+    margin-bottom: -1em;
+    margin-left: 3em;
+}
+
+/* Base style */
+.chosen-dashboard .icon-img {
+    transition: transform 0.3s ease;
+  }
+  
+  /* Hover state swaps based on data-icon */
+  .chosen-dashboard:hover[data-icon="search"] .icon-img {
+    content: url('/images/search-orange.png');
+  }
+  
+  .chosen-dashboard:hover[data-icon="message"] .icon-img {
+    content: url('/images/message-orange.png');
+  }
+  
+  .chosen-dashboard:hover[data-icon="consultation"] .icon-img {
+    content: url('/images/consultation-orange.png');
+  }
+  
+  .chosen-dashboard:hover[data-icon="calendar"] .icon-img {
+    content: url('/images/calendar-orange.png');
+  }
+
+  .chosen-dashboard:hover[data-icon="maintenance"] .icon-img {
+    content: url('/images/maintenance-orange.png');
+  }
+
+  .chosen-dashboard:hover[data-icon="lawyers"] .icon-img {
+    content: url('/images/lawyers-orange.png');
+  }
+
+  .chosen-dashboard:hover[data-icon="secretary"] .icon-img {
+    content: url('/images/secretary-orange.png');
+  }
+  
+  .navigation .side-nav {
+    width: 60px;
+  }
+  
+  .navigation .chosen-dashboard {
+    display: block;
+    position: relative;
+  }
+  
+  .navigation .icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .navigation .icon-label {
+    position: absolute;
+    left: 60px;
+    opacity: 0;
+    white-space: nowrap;
+    background-color: #fff;
+    color: rgb(250, 127, 26);
+    font-size: 0.9rem;
+    padding: 5px 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    transform: translateY(0);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+    z-index: 10;
+  }
+  
+  .navigation .chosen-dashboard:hover .icon-label {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+  
