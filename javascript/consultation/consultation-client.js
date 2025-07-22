@@ -38,7 +38,7 @@ const consultation = Vue.createApp({
 
     this.loading = true;
     try {
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       const res = await fetch(`${baseUrl}/api/consultations?client_id=${this.clientId}`);
       if (!res.ok) throw new Error('Failed to load consultations');
       const consultationsData = await res.json();
@@ -98,7 +98,7 @@ const consultation = Vue.createApp({
     },
     async fetchLawyerRecommendation(consultationId) {
       try {
-        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const baseUrl = window.API_BASE_URL;
         const res = await fetch(`${baseUrl}/api/lawyer-notes-view/${consultationId}`);
         if (!res.ok) throw new Error('Failed to fetch recommendation');
         const data = await res.json();
@@ -141,7 +141,7 @@ const consultation = Vue.createApp({
       };
       // Check if review exists
       try {
-        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const baseUrl = window.API_BASE_URL;
         const res = await fetch(`${baseUrl}/api/reviews/consultation/${this.reviewForm.consultation_id}/client/${this.clientId}`);
         if (res.ok) {
           const data = await res.json();
@@ -171,7 +171,7 @@ const consultation = Vue.createApp({
         let res;
         if (this.reviewForm.review_id) {
           // Edit existing review
-          res = await fetch(`${baseUrl}/api/reviews/${this.reviewForm.review_id}`, {
+          res = await fetch(`${window.API_BASE_URL}/api/reviews/${this.reviewForm.review_id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -181,7 +181,7 @@ const consultation = Vue.createApp({
           });
         } else {
           // Add new review
-          res = await fetch('http://localhost:5500/api/reviews', {
+          res = await fetch(`${window.API_BASE_URL}/api/reviews`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(this.reviewForm)
@@ -206,7 +206,7 @@ const consultation = Vue.createApp({
     async hasReview(consult) {
       // Helper to check if a review exists for this consultation
       try {
-        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const baseUrl = window.API_BASE_URL;
         const res = await fetch(`${baseUrl}/api/reviews/consultation/${consult.consultation_id || consult.id}/client/${this.clientId}`);
         return res.ok;
       } catch {
@@ -239,7 +239,7 @@ const consultation = Vue.createApp({
         formData.append('consultation_id', this.selectedConsultation.consultation_id);
         formData.append('client_id', this.clientId);
         formData.append('lawyer_id', this.selectedConsultation.lawyer_id);
-        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const baseUrl = window.API_BASE_URL;
         const res = await fetch(`${baseUrl}/api/payments/upload`, {
           method: 'POST',
           body: formData

@@ -28,7 +28,7 @@ const Password = Vue.createApp({
         }
   
         try {
-          const response = await fetch(`http://localhost:5500/api/change-password-secretary/${this.roleId}`, {
+          const response = await fetch(`${window.API_BASE_URL}/api/change-password-secretary/${this.roleId}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'

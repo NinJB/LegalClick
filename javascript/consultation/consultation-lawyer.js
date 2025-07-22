@@ -29,7 +29,7 @@ const consultation = Vue.createApp({
 
     this.loading = true;
     try {
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       const res = await fetch(`${baseUrl}/consultations?lawyer_id=${this.lawyerId}`);
       if (!res.ok) throw new Error('Failed to load consultations');
       const consultationsData = await res.json();
@@ -87,7 +87,7 @@ const consultation = Vue.createApp({
       if (!consultation) return;
 
       try {
-        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const baseUrl = window.API_BASE_URL;
         const res = await fetch(`${baseUrl}/api/consultations-update/${consultationId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -136,7 +136,7 @@ const consultation = Vue.createApp({
     async completeConsultation() {
       const consultationId = this.selectedConsultation.id;
       try {
-        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const baseUrl = window.API_BASE_URL;
         const updateRes = await fetch(`${baseUrl}/api/consultations-update/${consultationId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -144,7 +144,7 @@ const consultation = Vue.createApp({
         });
         if (!updateRes.ok) throw new Error('Failed to update consultation');
 
-        const noteRes = await fetch('http://localhost:5500/api/lawyer-notes', {
+        const noteRes = await fetch(`${baseUrl}/api/lawyer-notes`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -167,7 +167,7 @@ const consultation = Vue.createApp({
     },
     async fetchLawyerNote(consultationId) {
       try {
-        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const baseUrl = window.API_BASE_URL;
         const res = await fetch(`${baseUrl}/api/lawyer-notes-view/${consultationId}`);
         if (!res.ok) throw new Error('Failed to fetch note');
         const data = await res.json();
@@ -204,7 +204,7 @@ const consultation = Vue.createApp({
     async openNotesPopup(consultation) {
       this.selectedConsultation = consultation;
       try {
-        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const baseUrl = window.API_BASE_URL;
         const res = await fetch(`${baseUrl}/api/lawyer-notes-view/${consultation.id}`);
         if (!res.ok) throw new Error('Failed to fetch notes');
         this.lawyerNote = await res.json();
@@ -220,7 +220,7 @@ const consultation = Vue.createApp({
     },
     async fetchReviewForConsultation(consultationId, clientId) {
       try {
-        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const baseUrl = window.API_BASE_URL;
         const res = await fetch(`${baseUrl}/api/reviews/consultation/${consultationId}/client/${clientId}`);
         if (res.ok) {
           this.reviewToShow = await res.json();

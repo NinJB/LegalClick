@@ -28,7 +28,7 @@ const consultation = Vue.createApp({
     async fetchApprovedLawyers() {
       this.loading = true;
       try {
-        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const baseUrl = window.API_BASE_URL;
         const res = await fetch(`${baseUrl}/api/secretary-lawyers-view/${this.secretaryId}`);
         if (!res.ok) throw new Error('Failed to fetch lawyers.');
         const data = await res.json();
@@ -56,7 +56,7 @@ const consultation = Vue.createApp({
       this.loading = true;
       this.error = null;
       try {
-        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const baseUrl = window.API_BASE_URL;
         const res = await fetch(`${baseUrl}/consultations?lawyer_id=${this.selectedLawyerId}`);
         if (!res.ok) throw new Error('Failed to load consultations');
         const consultationsData = await res.json();
@@ -98,7 +98,7 @@ const consultation = Vue.createApp({
       if (!consultation) return;
 
       try {
-        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const baseUrl = window.API_BASE_URL;
         const res = await fetch(`${baseUrl}/api/consultations-update/${consultationId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },

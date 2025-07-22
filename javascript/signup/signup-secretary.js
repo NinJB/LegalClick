@@ -64,7 +64,7 @@ const signup = Vue.createApp({
       const formData = new FormData(form);
 
       try {
-        const res = await fetch('http://localhost:5500/api/signup-secretary', {
+        const res = await fetch(`${window.API_BASE_URL}/api/signup-secretary`, {
           method: 'POST',
           body: formData,
         });

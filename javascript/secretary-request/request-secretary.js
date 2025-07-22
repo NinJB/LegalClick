@@ -26,7 +26,7 @@ const secretary_request = Vue.createApp({
   methods: {
     async fetchRequests() {
       try {
-        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const baseUrl = window.API_BASE_URL;
         const response = await fetch(`${baseUrl}/api/secretary/${this.secretaryId}/requests`);
         const data = await response.json();
         console.log('Fetched requests:', data);
@@ -49,7 +49,7 @@ const secretary_request = Vue.createApp({
     async removeConfirmed() {
       try {
         console.log("Selected request in removeConfirmed:", this.selectedRequest);
-        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const baseUrl = window.API_BASE_URL;
         const response = await fetch(`${baseUrl}/api/secretary/requests/${this.selectedRequest.work_id}`, {
           method: 'DELETE'
         });

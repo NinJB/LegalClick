@@ -132,12 +132,12 @@ createApp({
       this.activeSection = this.activeSection === section ? '' : section;
     },
     async fetchSpecializations() {
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       const res = await fetch(`${baseUrl}/api/specializations`);
       this.specializations = await res.json();
     },
     async fetchExistingSelections() {
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       const [specsRes, availabilityRes] = await Promise.all([
         fetch(`${baseUrl}/api/lawyer/${this.roleId}/specializations`),
         fetch(`${baseUrl}/api/lawyer/${this.roleId}/availability`)
@@ -153,7 +153,7 @@ createApp({
       }
     },
     async fetchServices() {
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       const res = await fetch(`${baseUrl}/api/lawyer/${this.roleId}/services`);
       const data = await res.json();
       if (data) {
@@ -170,7 +170,7 @@ createApp({
       }
     },
     async saveSpecializations() {
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       const res = await fetch(`${baseUrl}/api/lawyer/${this.roleId}/specializations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -188,7 +188,7 @@ createApp({
       }
     },
     async saveAvailability() {
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       const res = await fetch(`${baseUrl}/api/lawyer/${this.roleId}/availability`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -202,7 +202,7 @@ createApp({
       }
     },
     async saveServices() {
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       const res = await fetch(`${baseUrl}/api/lawyer/${this.roleId}/services`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
