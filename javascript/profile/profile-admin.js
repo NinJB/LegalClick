@@ -25,7 +25,7 @@ const adminProfile = Vue.createApp({
     },
     async created() {
       this.roleId = new URLSearchParams(window.location.search).get('role_id');
-      const res = await fetch(`http://localhost:5500/api/admin/by-role/${this.roleId}`);
+      const res = await fetch(`${window.API_BASE_URL}/api/admin/by-role/${this.roleId}`);
       const data = await res.json();
       this.admin = data;
       Object.assign(this.form, {
@@ -39,7 +39,7 @@ const adminProfile = Vue.createApp({
     methods: {
       async checkUsername() {
         if (this.form.username === this.admin.username) return this.usernameError = false;
-        const res = await fetch('http://localhost:5500/api/check-username', {
+        const res = await fetch(`${window.API_BASE_URL}/api/check-username`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
@@ -53,7 +53,7 @@ const adminProfile = Vue.createApp({
       async submitForm() {
         if (this.usernameError) return;
         const upd = { ...this.form };
-        const res = await fetch(`http://localhost:5500/api/admin/update/${this.admin.admin_id}`, {
+        const res = await fetch(`${window.API_BASE_URL}/api/admin/update/${this.admin.admin_id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(upd)

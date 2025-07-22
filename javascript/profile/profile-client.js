@@ -44,7 +44,7 @@ const clientProfile = Vue.createApp({
     const params = new URLSearchParams(window.location.search);
     this.roleId = params.get('role_id');
 
-    const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+    const baseUrl = window.API_BASE_URL;
     const res = await fetch(`${baseUrl}/api/client/by-role/${this.roleId}`);
     const data = await res.json();
 
@@ -75,7 +75,7 @@ const clientProfile = Vue.createApp({
         return;
       }
 
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       const res = await fetch(`${baseUrl}/api/check-username`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -102,7 +102,7 @@ const clientProfile = Vue.createApp({
         contact_number: this.form.contact_number
       };
 
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       const response = await fetch(`${baseUrl}/api/client/update/${this.client.client_id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

@@ -17,7 +17,7 @@ const app = Vue.createApp({
       this.showProfileMenu = state;
     },
     async fetchNotifications() {
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       const res = await fetch(`${baseUrl}/api/notifications/secretary?user_id=${this.roleId}`);
       if (res.ok) {
         this.notifications = await res.json();
@@ -58,7 +58,7 @@ const app = Vue.createApp({
     async markAsRead(notif, e) {
       e.stopPropagation();
       if (notif.notification_status === 'read') return;
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       await fetch(`${baseUrl}/api/notifications/${notif.notification_id}/read`, { method: 'PATCH' });
       notif.notification_status = 'read';
       this.unreadCount = this.notifications.filter(n => n.notification_status !== 'read').length;

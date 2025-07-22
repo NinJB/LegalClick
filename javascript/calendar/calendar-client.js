@@ -93,7 +93,7 @@ const calendarApp = Vue.createApp({
             const clientId = urlParams.get('role_id');
             if (!clientId) return;
             try {
-                const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+                const baseUrl = window.API_BASE_URL;
                 const res = await fetch(`${baseUrl}/api/consultations?client_id=${clientId}`);
                 if (!res.ok) throw new Error('Failed to load consultations');
                 const consultations = await res.json();

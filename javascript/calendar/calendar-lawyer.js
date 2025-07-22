@@ -116,7 +116,7 @@ const calendarLawyerApp = Vue.createApp({
                     this.loading = false;
                     return;
                 }
-                const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+                const baseUrl = window.API_BASE_URL;
                 const res = await fetch(`${baseUrl}/consultations?lawyer_id=${this.lawyerId}`);
                 if (!res.ok) throw new Error('Failed to load consultations');
                 const consultations = await res.json();
@@ -212,7 +212,7 @@ const calendarLawyerApp = Vue.createApp({
             this.lawyerAvailability = null;
             this.validRescheduleTimes = [];
             try {
-                const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+                const baseUrl = window.API_BASE_URL;
                 const res = await fetch(`${baseUrl}/api/lawyer_availability/${this.lawyerId}`);
                 if (res.ok) {
                     this.lawyerAvailability = await res.json();
@@ -267,7 +267,7 @@ const calendarLawyerApp = Vue.createApp({
                 return;
             }
             try {
-                const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+                const baseUrl = window.API_BASE_URL;
                 const res = await fetch(`${baseUrl}/api/consultations-reschedule/${this.rescheduleConsultationId}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },

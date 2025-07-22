@@ -28,7 +28,7 @@ const secretaryProfile = Vue.createApp({
     const params = new URLSearchParams(window.location.search);
     this.roleId = params.get('role_id');
 
-    const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+    const baseUrl = window.API_BASE_URL;
     const res = await fetch(`${baseUrl}/api/secretary/by-role/${this.roleId}`);
     const data = await res.json();
 
@@ -47,7 +47,7 @@ const secretaryProfile = Vue.createApp({
         this.usernameError = false;
         return;
       }
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       const res = await fetch(`${baseUrl}/api/check-username`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -72,7 +72,7 @@ const secretaryProfile = Vue.createApp({
         contact_number: this.form.contact_number
       };
 
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       const response = await fetch(`${baseUrl}/api/secretary/update/${this.secretary.secretary_id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

@@ -80,7 +80,7 @@ const search = Vue.createApp({
   },
   methods: {
     fetchLawyers() {
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       let url = `${baseUrl}/api/lawyers`;
       const params = new URLSearchParams();
 
@@ -103,7 +103,7 @@ const search = Vue.createApp({
         .catch(err => console.error('Error fetching lawyers:', err));
     },
     fetchSpecializations() {
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       fetch(`${baseUrl}/api/specializations`)
         .then(res => res.json())
         .then(data => {
@@ -129,7 +129,7 @@ const search = Vue.createApp({
       this.lawyerServices = null;
     },
     fetchLawyerDetails(lawyer_id) {
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       fetch(`${baseUrl}/api/lawyer-details/${lawyer_id}`)
         .then(res => res.json())
         .then(data => {
@@ -152,7 +152,7 @@ const search = Vue.createApp({
     checkExistingRequests() {
       if (!this.loggedInRoleId) return;
       
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       fetch(`${baseUrl}/api/check-secretary-lawyers?role_id=${this.loggedInRoleId}`)
         .then(res => res.json())
         .then(data => {
@@ -177,7 +177,7 @@ const search = Vue.createApp({
       window.location.href = bookingUrl;
     },
     fetchLawyerServicesList() {
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       fetch(`${baseUrl}/api/lawyer-services`)
       .then(res => res.json())
       .then(data => {
@@ -218,7 +218,7 @@ const search = Vue.createApp({
         work_status: 'Pending'
       };
 
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       fetch(`${baseUrl}/api/secretary-lawyers`, {
         method: 'POST',
         headers: {

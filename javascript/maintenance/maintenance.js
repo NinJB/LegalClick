@@ -95,7 +95,7 @@ Vue.createApp({
   methods: {
     async addAdmin() {
       try {
-        const response = await fetch('http://localhost:5500/api/add-admin', {
+        const response = await fetch(`${window.API_BASE_URL}/api/add-admin`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...this.admin, role_id: this.roleId })
@@ -120,7 +120,7 @@ Vue.createApp({
     },
     async getRoleAdmins() {
       try {
-        const res = await fetch(`http://localhost:5500/api/admins/role/${this.roleId}`);
+        const res = await fetch(`${window.API_BASE_URL}/api/admins/role/${this.roleId}`);
         this.roleAdmins = await res.json();
       } catch (error) {
         console.error('Error fetching admins:', error);
@@ -128,7 +128,7 @@ Vue.createApp({
     },
     async addSpecialization() {
       try {
-        const res = await fetch('http://localhost:5500/api/add-specializations', {
+        const res = await fetch(`${window.API_BASE_URL}/api/add-specializations`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ specialization_name: this.specialization_name })
@@ -146,7 +146,7 @@ Vue.createApp({
     },
     async getSpecializations() {
       try {
-        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const baseUrl = window.API_BASE_URL;
         const res = await fetch(`${baseUrl}/api/view-specializations`);
         this.specializations = await res.json();
       } catch (error) {
@@ -155,7 +155,7 @@ Vue.createApp({
     },
     async removeSpecialization(id) {
       try {
-        await fetch(`http://localhost:5500/api/delete-specializations/${id}`, {
+        await fetch(`${window.API_BASE_URL}/api/delete-specializations/${id}`, {
           method: 'DELETE'
         });
         this.getSpecializations();

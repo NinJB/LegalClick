@@ -17,7 +17,7 @@ const Login = Vue.createApp({
       if (this.countdownInterval) clearInterval(this.countdownInterval);
 
       try {
-        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const baseUrl = window.API_BASE_URL;
         const response = await fetch(`${baseUrl}/api/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

@@ -27,7 +27,7 @@ const lawyer_requests = Vue.createApp({
   methods: {
     async fetchRequests() {
       try {
-        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const baseUrl = window.API_BASE_URL;
         const response = await fetch(`${baseUrl}/api/lawyer/${this.lawyerId}/requests`);
         const data = await response.json();
         this.requests = data;
@@ -49,7 +49,7 @@ const lawyer_requests = Vue.createApp({
     async proceedAction() {
       let method = 'PUT';
       let body = null;
-      let url = `http://localhost:5500/api/secretary/requests/${this.selectedRequest.work_id}`;
+      let url = `${window.API_BASE_URL}/api/secretary/requests/${this.selectedRequest.work_id}`;
 
       if (this.modalType === 'remove') {
         method = 'DELETE';

@@ -68,7 +68,7 @@ const search = Vue.createApp({
   },
   methods: {
     fetchLawyers() {
-        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const baseUrl = window.API_BASE_URL;
         let url = `${baseUrl}/api/lawyers`;
         const params = new URLSearchParams();
 
@@ -91,7 +91,7 @@ const search = Vue.createApp({
           .catch(err => console.error('Error fetching lawyers:', err));
     },
     fetchSpecializations() {
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       fetch(`${baseUrl}/api/specializations`)
         .then(res => res.json())
         .then(data => {
@@ -117,7 +117,7 @@ const search = Vue.createApp({
       this.lawyerServices = null;
     },
     fetchLawyerDetails(lawyer_id) {
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       fetch(`${baseUrl}/api/lawyer-details/${lawyer_id}`)
         .then(res => res.json())
         .then(data => {
@@ -143,7 +143,7 @@ const search = Vue.createApp({
     },
     fetchLawyerReviews(lawyer_id) {
       this.reviewsLoading = true;
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       fetch(`${baseUrl}/api/lawyer/${lawyer_id}/reviews`)
         .then(res => res.json())
         .then(data => {

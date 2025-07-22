@@ -65,7 +65,7 @@ const lawyerManagement = Vue.createApp({
     },
     methods: {
         fetchLawyers() {
-        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const baseUrl = window.API_BASE_URL;
         fetch(`${baseUrl}/api/public-lawyers`)
             .then(response => response.json())
             .then(data => {
@@ -82,7 +82,7 @@ const lawyerManagement = Vue.createApp({
             this.fetchLogs(lawyer.lawyer_id);
         },
         fetchConsultations(lawyerId) {
-            const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+            const baseUrl = window.API_BASE_URL;
             fetch(`${baseUrl}/api/lawyers/${lawyerId}/consultations`)
                 .then(response => response.json())
                 .then(data => {
@@ -93,7 +93,7 @@ const lawyerManagement = Vue.createApp({
                 });
         },
         fetchLogs(lawyerId) {
-            const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+            const baseUrl = window.API_BASE_URL;
             fetch(`${baseUrl}/api/lawyers/${lawyerId}/logs`)
                 .then(response => response.json())
                 .then(data => {
@@ -133,7 +133,7 @@ const lawyerManagement = Vue.createApp({
                 console.error('Invalid lawyer id');
                 return;
             }
-            const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+            const baseUrl = window.API_BASE_URL;
             await fetch(`${baseUrl}/public-lawyers/${lawyer_id}/status`, {
                 method: 'PUT',
                 headers: {

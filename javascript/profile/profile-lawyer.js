@@ -36,7 +36,7 @@ const profile = Vue.createApp({
     const params = new URLSearchParams(window.location.search);
     this.roleId = params.get('role_id'); // Get role_id from the URL
 
-    const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+    const baseUrl = window.API_BASE_URL;
     // Fetch the lawyer details using the role_id
     const res = await fetch(`${baseUrl}/api/lawyer/by-role/${this.roleId}`);
     const data = await res.json();
@@ -62,7 +62,7 @@ const profile = Vue.createApp({
         return;
       }
 
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       const res = await fetch(`${baseUrl}/api/check-username`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -88,7 +88,7 @@ const profile = Vue.createApp({
 
       // If a new profile picture is selected, include it in the update
       if (this.profilePictureFile) {
-        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const baseUrl = window.API_BASE_URL;
         const formData = new FormData();
         formData.append('file', this.profilePictureFile);
         const uploadResponse = await fetch(`${baseUrl}/api/lawyer/upload-profile-picture/${this.lawyer.lawyer_id}`, {
@@ -107,7 +107,7 @@ const profile = Vue.createApp({
       // Log the data being sent to the server
       console.log('Sending PUT request with data:', updateData);
 
-      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const baseUrl = window.API_BASE_URL;
       const response = await fetch(`${baseUrl}/api/lawyer/update/${this.lawyer.lawyer_id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -140,7 +140,7 @@ const profile = Vue.createApp({
     },
     async saveProfilePicture() {
       if (this.profilePictureFile) {
-        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const baseUrl = window.API_BASE_URL;
         const formData = new FormData();
         formData.append('file', this.profilePictureFile);
 
