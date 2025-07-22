@@ -132,13 +132,15 @@ createApp({
       this.activeSection = this.activeSection === section ? '' : section;
     },
     async fetchSpecializations() {
-      const res = await fetch('http://localhost:5500/api/specializations');
+      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const res = await fetch(`${baseUrl}/api/specializations`);
       this.specializations = await res.json();
     },
     async fetchExistingSelections() {
+      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
       const [specsRes, availabilityRes] = await Promise.all([
-        fetch(`http://localhost:5500/api/lawyer/${this.roleId}/specializations`),
-        fetch(`http://localhost:5500/api/lawyer/${this.roleId}/availability`)
+        fetch(`${baseUrl}/api/lawyer/${this.roleId}/specializations`),
+        fetch(`${baseUrl}/api/lawyer/${this.roleId}/availability`)
       ]);
 
       const specs = await specsRes.json();
@@ -151,7 +153,8 @@ createApp({
       }
     },
     async fetchServices() {
-      const res = await fetch(`http://localhost:5500/api/lawyer/${this.roleId}/services`);
+      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const res = await fetch(`${baseUrl}/api/lawyer/${this.roleId}/services`);
       const data = await res.json();
       if (data) {
         this.services = data;
@@ -167,7 +170,8 @@ createApp({
       }
     },
     async saveSpecializations() {
-      const res = await fetch(`http://localhost:5500/api/lawyer/${this.roleId}/specializations`, {
+      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const res = await fetch(`${baseUrl}/api/lawyer/${this.roleId}/specializations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -184,7 +188,8 @@ createApp({
       }
     },
     async saveAvailability() {
-      const res = await fetch(`http://localhost:5500/api/lawyer/${this.roleId}/availability`, {
+      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const res = await fetch(`${baseUrl}/api/lawyer/${this.roleId}/availability`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(this.officeHours)
@@ -197,7 +202,8 @@ createApp({
       }
     },
     async saveServices() {
-      const res = await fetch(`http://localhost:5500/api/lawyer/${this.roleId}/services`, {
+      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const res = await fetch(`${baseUrl}/api/lawyer/${this.roleId}/services`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(this.services)

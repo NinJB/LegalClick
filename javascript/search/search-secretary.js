@@ -80,7 +80,8 @@ const search = Vue.createApp({
   },
   methods: {
     fetchLawyers() {
-      let url = 'http://localhost:5500/api/lawyers';
+      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      let url = `${baseUrl}/api/lawyers`;
       const params = new URLSearchParams();
 
       if (this.selectedSpecialization !== 'Select') {
@@ -102,7 +103,8 @@ const search = Vue.createApp({
         .catch(err => console.error('Error fetching lawyers:', err));
     },
     fetchSpecializations() {
-      fetch('http://localhost:5500/api/specializations')
+      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      fetch(`${baseUrl}/api/specializations`)
         .then(res => res.json())
         .then(data => {
           this.specializations = data;
@@ -127,7 +129,8 @@ const search = Vue.createApp({
       this.lawyerServices = null;
     },
     fetchLawyerDetails(lawyer_id) {
-      fetch(`http://localhost:5500/api/lawyer-details/${lawyer_id}`)
+      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      fetch(`${baseUrl}/api/lawyer-details/${lawyer_id}`)
         .then(res => res.json())
         .then(data => {
           this.lawyerAvailability = data.availability;
@@ -149,7 +152,8 @@ const search = Vue.createApp({
     checkExistingRequests() {
       if (!this.loggedInRoleId) return;
       
-      fetch(`http://localhost:5500/api/check-secretary-lawyers?role_id=${this.loggedInRoleId}`)
+      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      fetch(`${baseUrl}/api/check-secretary-lawyers?role_id=${this.loggedInRoleId}`)
         .then(res => res.json())
         .then(data => {
           this.existingRequests = data;
@@ -173,7 +177,8 @@ const search = Vue.createApp({
       window.location.href = bookingUrl;
     },
     fetchLawyerServicesList() {
-      fetch('http://localhost:5500/api/lawyer-services')
+      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      fetch(`${baseUrl}/api/lawyer-services`)
       .then(res => res.json())
       .then(data => {
         this.lawyerServicesList = data;
@@ -213,7 +218,8 @@ const search = Vue.createApp({
         work_status: 'Pending'
       };
 
-      fetch('http://localhost:5500/api/secretary-lawyers', {
+      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      fetch(`${baseUrl}/api/secretary-lawyers`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

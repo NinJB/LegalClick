@@ -8,6 +8,7 @@ const { DateTime } = require('luxon');
 const bcrypt = require('bcrypt');
 const { hashPassword } = require('./hash-passwords');
 const open = require('open').default;
+const cron = require('node-cron');
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -15,9 +16,53 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 const upload = multer({ dest: 'uploads/' });
 
+// --- Payment Proof Upload (Client uploads proof of payment) ---
+const paymentProofUpload = multer({ storage: multer.memoryStorage() });
+
 client.connect()
   .then(() => console.log("Connected to PostgreSQL"))
   .catch(err => console.error("Connection error", err.stack));
+
+// --- Auto-complete past 'Upcoming' consultations ---
+cron.schedule('0 * * * *', async () => { // every hour
+  try {
+    // Use only the date part for comparison (YYYY-MM-DD)
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+    // 1. Update status
+    const updateResult = await client.query(
+      `UPDATE consultation
+       SET consultation_status = 'Completed'
+       WHERE consultation_status = 'Upcoming'
+         AND consultation_date::date < $1
+       RETURNING consultation_id`,
+      [todayStr]
+    );
+    const completedIds = updateResult.rows.map(row => row.consultation_id);
+    if (completedIds.length > 0) {
+      // 2. For each completed consultation, insert empty notes if not already present
+      for (const consultationId of completedIds) {
+        // Check if a note already exists
+        const noteRes = await client.query(
+          'SELECT 1 FROM lawyer_notes WHERE consultation_id = $1',
+          [consultationId]
+        );
+        if (noteRes.rowCount === 0) {
+          await client.query(
+            'INSERT INTO lawyer_notes (consultation_id, note, recommendation) VALUES ($1, $2, $3)',
+            [consultationId, '', '']
+          );
+        }
+      }
+    }
+    console.log('Auto-completed past upcoming consultations and generated empty notes if needed');
+  } catch (err) {
+    console.error('Error auto-completing consultations:', err);
+  }
+});
 
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
@@ -1261,14 +1306,14 @@ app.post('/api/consultation', upload.none(), async (req, res) => {
       payment_mode,
     } = req.body;
 
-    await client.query(
+    const consultationResult = await client.query(
       `INSERT INTO consultation (
         client_id, lawyer_id, date, consultation_category, consultation_description,
         consultation_date, consultation_time, consultation_duration,
         consultation_fee, consultation_mode, payment_mode, consultation_status
       ) VALUES (
         $1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8, $9, $10, 'Pending'
-      )`,
+      ) RETURNING consultation_id`,
       [
         client_id,
         lawyer_id,
@@ -1282,8 +1327,21 @@ app.post('/api/consultation', upload.none(), async (req, res) => {
         payment_mode
       ]
     );
-
+    const consultation_id = consultationResult.rows[0].consultation_id;
+    // Insert notification row as specified
+    await client.query(
+      `INSERT INTO notifications (consultation_id, notification_status, sender, receiver, date, time, notification_purpose)
+       VALUES ($1, $2, $3, $4, CURRENT_DATE, CURRENT_TIME, $5)`,
+      [
+        consultation_id,
+        'unread',
+        client_id, // sender is the client
+        lawyer_id, // receiver is the lawyer
+        'request'
+      ]
+    );
     res.json({ message: 'Consultation booked successfully' });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Booking failed' });
@@ -1360,6 +1418,30 @@ app.patch('/api/consultations-update/:consultation_id', async (req, res) => {
 
     if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Consultation not found' });
+    }
+
+    // Add notification for approval/rejection
+    if (consultation_status === 'Rejected' || consultation_status === 'Upcoming' || consultation_status === 'Unpaid') {
+      // Get lawyer_id and client_id
+      const consult = result.rows[0];
+      let purpose = '';
+      if (consultation_status === 'Rejected') purpose = 'rejected';
+      else if (consultation_status === 'Upcoming' || consultation_status === 'Unpaid') purpose = 'approved';
+      if (purpose) {
+        await client.query(
+          `INSERT INTO notifications (consultation_id, notification_status, sender, receiver, date, time, notification_purpose)
+           VALUES ($1, $2, $3, $4, CURRENT_DATE, CURRENT_TIME, $5)`,
+          [consultation_id, 'unread', consult.lawyer_id, consult.client_id, purpose]
+        );
+      }
+      // If secretary_id is provided, add notification for lawyer
+      if (req.body.secretary_id && (consultation_status === 'Upcoming' || consultation_status === 'Unpaid')) {
+        await client.query(
+          `INSERT INTO notifications (consultation_id, notification_status, sender, receiver, date, time, notification_purpose)
+           VALUES ($1, $2, $3, $4, CURRENT_DATE, CURRENT_TIME, $5)`,
+          [consultation_id, 'unread', req.body.secretary_id, consult.lawyer_id, 'approved_by_secretary']
+        );
+      }
     }
 
     res.status(200).json({ message: 'Consultation updated successfully', consultation: result.rows[0] });
@@ -1603,6 +1685,13 @@ app.post('/api/secretary-lawyers', async (req, res) => {
       [secretary_id, lawyer_id, work_status || 'Pending']
     );
 
+    // Add notification for lawyer
+    await client.query(
+      `INSERT INTO notifications (notification_status, sender, receiver, date, time, notification_purpose)
+       VALUES ($1, $2, $3, CURRENT_DATE, CURRENT_TIME, $4)`,
+      ['unread', secretary_id, lawyer_id, 'application']
+    );
+
     res.status(201).json({
       message: 'Request sent successfully',
       work_id: result.rows[0].work_id
@@ -1774,6 +1863,17 @@ app.put('/api/secretary/requests/:work_id', async (req, res) => {
       'UPDATE secretary_lawyers SET work_status = $1 WHERE work_id = $2',
       [status, workId]
     );
+    // Fetch secretary_id and lawyer_id for notification
+    const rel = await client.query('SELECT secretary_id, lawyer_id FROM secretary_lawyers WHERE work_id = $1', [workId]);
+    if (rel.rows.length > 0) {
+      const { secretary_id, lawyer_id } = rel.rows[0];
+      let purpose = status === 'Approved' ? 'approved' : 'rejected';
+      await client.query(
+        `INSERT INTO notifications (notification_status, sender, receiver, date, time, notification_purpose)
+         VALUES ($1, $2, $3, CURRENT_DATE, CURRENT_TIME, $4)`,
+        ['unread', lawyer_id, secretary_id, purpose]
+      );
+    }
     res.sendStatus(200);
   } catch (err) {
     console.error('Database error:', err);
@@ -1886,6 +1986,372 @@ app.get('/api/lawyer-notes-view/:consultation_id', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch notes' });
+  }
+});
+
+// GET reviews for a lawyer (with client username and average rating)
+app.get('/api/lawyer/:lawyerId/reviews', async (req, res) => {
+  const { lawyerId } = req.params;
+  try {
+    // Fetch reviews with client username and consultation_id
+    const reviewsQuery = `
+      SELECT r.review_id, r.rating, r.review_description, r.consultation_id, c.username
+      FROM reviews r
+      JOIN clients c ON r.client_id = c.client_id
+      WHERE r.lawyer_id = $1
+      ORDER BY r.review_id DESC
+    `;
+    const reviewsResult = await client.query(reviewsQuery, [lawyerId]);
+
+    // Calculate average rating
+    const avgQuery = `
+      SELECT AVG(rating) AS average_rating
+      FROM reviews
+      WHERE lawyer_id = $1
+    `;
+    const avgResult = await client.query(avgQuery, [lawyerId]);
+    const average_rating = avgResult.rows[0]?.average_rating || null;
+
+    res.json({
+      reviews: reviewsResult.rows,
+      average_rating: average_rating ? parseFloat(average_rating).toFixed(2) : null
+    });
+  } catch (err) {
+    console.error('Error fetching reviews:', err);
+    res.status(500).json({ error: 'Failed to fetch reviews' });
+  }
+});
+
+// POST: Add a new review
+app.post('/api/reviews', async (req, res) => {
+  const { consultation_id, client_id, lawyer_id, rating, review_description } = req.body;
+  if (!consultation_id || !client_id || !lawyer_id || !rating || !review_description) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  if (rating < 1 || rating > 5) {
+    return res.status(400).json({ error: 'Rating must be between 1 and 5' });
+  }
+  try {
+    const result = await client.query(
+      `INSERT INTO reviews (consultation_id, client_id, lawyer_id, rating, review_description)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING *`,
+      [consultation_id, client_id, lawyer_id, rating, review_description]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error adding review:', err);
+    res.status(500).json({ error: 'Failed to add review' });
+  }
+});
+
+// PUT: Edit an existing review
+app.put('/api/reviews/:review_id', async (req, res) => {
+  const { review_id } = req.params;
+  const { rating, review_description } = req.body;
+  if (!rating || !review_description) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  if (rating < 1 || rating > 5) {
+    return res.status(400).json({ error: 'Rating must be between 1 and 5' });
+  }
+  try {
+    const result = await client.query(
+      `UPDATE reviews SET rating = $1, review_description = $2 WHERE review_id = $3 RETURNING *`,
+      [rating, review_description, review_id]
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Review not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error updating review:', err);
+    res.status(500).json({ error: 'Failed to update review' });
+  }
+});
+
+// GET: Get review for a consultation by client
+app.get('/api/reviews/consultation/:consultation_id/client/:client_id', async (req, res) => {
+  const { consultation_id, client_id } = req.params;
+  try {
+    const result = await client.query(
+      `SELECT * FROM reviews WHERE consultation_id = $1 AND client_id = $2`,
+      [consultation_id, client_id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Review not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error fetching review:', err);
+    res.status(500).json({ error: 'Failed to fetch review' });
+  }
+});
+
+app.get('/api/notifications/client', async (req, res) => {
+  const { user_id } = req.query;
+  if (!user_id) {
+    return res.status(400).json({ error: 'Missing user_id' });
+  }
+  try {
+    const query = `
+      SELECT * FROM notifications
+      WHERE receiver = $1
+        AND notification_purpose IN ('rejected', 'approved', 'reschedule')
+      ORDER BY date DESC, time DESC
+    `;
+    const params = [user_id];
+    const { rows } = await client.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching client notifications:', err);
+    res.status(500).json({ error: 'Failed to fetch notifications' });
+  }
+});
+
+// GET notifications for a lawyer
+app.get('/api/notifications/lawyer', async (req, res) => {
+  const { user_id } = req.query;
+  if (!user_id) {
+    return res.status(400).json({ error: 'Missing user_id' });
+  }
+  try {
+    // Join with clients table to get client name for 'request' notifications
+    const query = `
+      SELECT n.*, c.first_name AS client_first_name, c.last_name AS client_last_name
+      FROM notifications n
+      LEFT JOIN clients c ON n.sender = c.client_id
+      WHERE n.receiver = $1
+        AND n.notification_purpose IN ('application', 'request', 'paid')
+      ORDER BY n.date DESC, n.time DESC
+    `;
+    const params = [user_id];
+    const { rows } = await client.query(query, params);
+    // console.log('Lawyer notifications:', rows); // Debug log removed
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching lawyer notifications:', err);
+    res.status(500).json({ error: 'Failed to fetch notifications' });
+  }
+});
+
+// GET notifications for a secretary
+app.get('/api/notifications/secretary', async (req, res) => {
+  const { user_id } = req.query;
+  if (!user_id) {
+    return res.status(400).json({ error: 'Missing user_id' });
+  }
+  try {
+    // Get all lawyer_ids managed by this secretary
+    const managedLawyersRes = await client.query(
+      'SELECT lawyer_id FROM secretary_lawyers WHERE secretary_id = $1 AND work_status = $2',
+      [user_id, 'Approved']
+    );
+    const lawyerIds = managedLawyersRes.rows.map(row => row.lawyer_id);
+    if (lawyerIds.length === 0) {
+      return res.json([]); // No managed lawyers, no notifications
+    }
+    // Get notifications for those lawyer_ids
+    const query = `
+      SELECT * FROM notifications
+      WHERE receiver = ANY($1)
+        AND notification_purpose IN ('application', 'request')
+      ORDER BY date DESC, time DESC
+    `;
+    const params = [lawyerIds];
+    const { rows } = await client.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching secretary notifications:', err);
+    res.status(500).json({ error: 'Failed to fetch notifications' });
+  }
+});
+
+// PATCH: Reschedule a consultation and notify client
+app.patch('/api/consultations-reschedule/:consultation_id', async (req, res) => {
+  const consultation_id = parseInt(req.params.consultation_id, 10);
+  const { consultation_date, consultation_time } = req.body;
+
+  if (isNaN(consultation_id) || !consultation_date || !consultation_time) {
+    return res.status(400).json({ error: 'Invalid input' });
+  }
+
+  try {
+    // Update consultation date and time
+    const updateResult = await client.query(
+      `UPDATE consultation
+       SET consultation_date = $1, consultation_time = $2
+       WHERE consultation_id = $3
+       RETURNING *`,
+      [consultation_date, consultation_time, consultation_id]
+    );
+    if (updateResult.rowCount === 0) {
+      return res.status(404).json({ error: 'Consultation not found' });
+    }
+    const updatedConsult = updateResult.rows[0];
+
+    // Get lawyer_id and client_id from consultation
+    const consultRes = await client.query(
+      'SELECT lawyer_id, client_id FROM consultation WHERE consultation_id = $1',
+      [consultation_id]
+    );
+    if (consultRes.rowCount === 0) {
+      return res.status(404).json({ error: 'Consultation not found' });
+    }
+    const { lawyer_id, client_id } = consultRes.rows[0];
+
+    // Insert notification
+    await client.query(
+      `INSERT INTO notifications (consultation_id, notification_status, sender, receiver, date, time, notification_purpose)
+       VALUES ($1, $2, $3, $4, CURRENT_DATE, CURRENT_TIME, $5)`,
+      [consultation_id, 'unread', lawyer_id, client_id, 'reschedule']
+    );
+
+    res.status(200).json({ message: 'Consultation rescheduled and notification sent', consultation: updatedConsult });
+  } catch (err) {
+    console.error('Reschedule error:', err);
+    res.status(500).json({ error: 'Failed to reschedule consultation' });
+  }
+});
+
+// --- Payment Proof Upload (Client uploads proof of payment) ---
+app.post('/api/payments/upload', paymentProofUpload.single('proof'), async (req, res) => {
+  const { consultation_id, client_id, lawyer_id } = req.body;
+  const proof = req.file ? req.file.buffer : null;
+  const payment_date = new Date();
+
+  try {
+    // Insert payment receipt
+    const result = await client.query(
+      `INSERT INTO payment_receipt (consultation_id, payment_date, proof)
+       VALUES ($1, $2, $3) RETURNING payment_id`,
+      [consultation_id, payment_date, proof]
+    );
+    // Update consultation status to Pending-Paid
+    await client.query(
+      `UPDATE consultation SET consultation_status = 'Pending-Paid' WHERE consultation_id = $1`,
+      [consultation_id]
+    );
+    // Notify lawyer
+    const clientNameResult = await client.query(
+      `SELECT first_name, last_name FROM clients WHERE client_id = $1`, [client_id]
+    );
+    const client_name = clientNameResult.rows.length > 0 ? `${clientNameResult.rows[0].first_name} ${clientNameResult.rows[0].last_name}` : 'A client';
+    await client.query(
+      `INSERT INTO notifications (sender, receiver, date, time, notification_purpose, notification_status, consultation_id)
+       VALUES ($1, $2, CURRENT_DATE, CURRENT_TIME, $3, 'unread', $4)` ,
+      [client_id, lawyer_id, 'paid', consultation_id]
+    );
+    res.json({ success: true, payment_id: result.rows[0].payment_id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: 'Database error' });
+  }
+});
+
+// --- Serve Payment Proof Image (for Receipt viewing) ---
+app.get('/api/payments/proof/:payment_id', async (req, res) => {
+  const { payment_id } = req.params;
+  try {
+    const result = await client.query(
+      `SELECT proof FROM payment_receipt WHERE payment_id = $1`,
+      [payment_id]
+    );
+    if (!result.rows.length || !result.rows[0].proof) {
+      return res.status(404).send('No proof found');
+    }
+    res.set('Content-Type', 'image/jpeg'); // or detect type if you store it
+    res.send(result.rows[0].proof);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Database error');
+  }
+});
+
+// --- Attorney Confirms Payment ---
+app.post('/api/payments/confirm', async (req, res) => {
+  const { consultation_id, client_id, lawyer_id } = req.body;
+  try {
+    // Update consultation status to Upcoming-Paid
+    await client.query(
+      `UPDATE consultation SET consultation_status = 'Upcoming-Paid' WHERE consultation_id = $1`,
+      [consultation_id]
+    );
+    // Notify client
+    const lawyerNameResult = await client.query(
+      `SELECT first_name, last_name FROM lawyers WHERE lawyer_id = $1`, [lawyer_id]
+    );
+    const lawyer_name = lawyerNameResult.rows.length > 0 ? `${lawyerNameResult.rows[0].first_name} ${lawyerNameResult.rows[0].last_name}` : 'The attorney';
+    await client.query(
+      `INSERT INTO notifications (sender, receiver, date, time, notification_purpose, notification_status, consultation_id)
+       VALUES ($1, $2, CURRENT_DATE, CURRENT_TIME, $3, 'unread', $4)` ,
+      [lawyer_id, client_id, `Atty. ${lawyer_name} has approved your consultation. Please proceed to payment.`, consultation_id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: 'Database error' });
+  }
+});
+
+// --- Mark Consultation as Completed_Paid ---
+app.post('/api/consultations/complete-paid/:consultation_id', async (req, res) => {
+  const consultation_id = parseInt(req.params.consultation_id, 10);
+  if (isNaN(consultation_id)) {
+    return res.status(400).json({ error: 'Invalid consultation ID' });
+  }
+  try {
+    const result = await client.query(
+      `UPDATE consultation SET consultation_status = 'Completed_Paid' WHERE consultation_id = $1 RETURNING *`,
+      [consultation_id]
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Consultation not found' });
+    }
+    res.json({ message: 'Consultation marked as Completed_Paid', consultation: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update consultation status' });
+  }
+});
+
+// --- Update Consultation Filters for Ongoing and Completed ---
+// (Update your frontend queries to include 'Upcoming-Paid' for ongoing and 'Completed_Paid' for completed)
+// Example for ongoing:
+// WHERE consultation_status IN ('Upcoming', 'Upcoming-Paid', ...)
+// Example for completed:
+// WHERE consultation_status IN ('Completed', 'Completed_Paid', ...)
+
+// --- Serve Receipt by Consultation ID (get payment_id by consultation_id) ---
+app.get('/api/payments/receipt/:consultation_id', async (req, res) => {
+  const { consultation_id } = req.params;
+  try {
+    const result = await client.query(
+      `SELECT payment_id FROM payment_receipt WHERE consultation_id = $1`,
+      [consultation_id]
+    );
+    if (!result.rows.length) {
+      return res.status(404).json({ error: 'No receipt found' });
+    }
+    res.json({ payment_id: result.rows[0].payment_id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+// PATCH: Mark notification as read
+app.patch('/api/notifications/:notification_id/read', async (req, res) => {
+  const { notification_id } = req.params;
+  try {
+    await client.query(
+      'UPDATE notifications SET notification_status = $1 WHERE notification_id = $2',
+      ['read', notification_id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error marking notification as read:', err);
+    res.status(500).json({ success: false, error: 'Database error' });
   }
 });
 

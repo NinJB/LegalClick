@@ -13,6 +13,9 @@ const search = Vue.createApp({
       lawyerAvailability: null,
       lawyerServices: null,
       specializations: [],
+      reviews: [], // For lawyer reviews
+      averageRating: null, // For average rating
+      reviewsLoading: false // For loading state
     };
   },
   computed: {
@@ -65,7 +68,8 @@ const search = Vue.createApp({
   },
   methods: {
     fetchLawyers() {
-        let url = 'http://localhost:5500/api/lawyers';
+        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        let url = `${baseUrl}/api/lawyers`;
         const params = new URLSearchParams();
 
         if (this.selectedSpecialization !== 'Select') {
@@ -87,7 +91,8 @@ const search = Vue.createApp({
           .catch(err => console.error('Error fetching lawyers:', err));
     },
     fetchSpecializations() {
-      fetch('http://localhost:5500/api/specializations')
+      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      fetch(`${baseUrl}/api/specializations`)
         .then(res => res.json())
         .then(data => {
           this.specializations = data;
@@ -104,6 +109,7 @@ const search = Vue.createApp({
     openPopup(lawyer) {
       this.selectedLawyer = lawyer;
       this.fetchLawyerDetails(lawyer.lawyer_id);
+      this.fetchLawyerReviews(lawyer.lawyer_id); // Fetch reviews when opening popup
     },
     closePopup() {
       this.selectedLawyer = null;
@@ -111,7 +117,8 @@ const search = Vue.createApp({
       this.lawyerServices = null;
     },
     fetchLawyerDetails(lawyer_id) {
-      fetch(`http://localhost:5500/api/lawyer-details/${lawyer_id}`)
+      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      fetch(`${baseUrl}/api/lawyer-details/${lawyer_id}`)
         .then(res => res.json())
         .then(data => {
           console.log(data);  // Debugging: Check the full data structure
@@ -133,6 +140,24 @@ const search = Vue.createApp({
           }
         })
         .catch(err => console.error('Error fetching lawyer details:', err));
+    },
+    fetchLawyerReviews(lawyer_id) {
+      this.reviewsLoading = true;
+      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      fetch(`${baseUrl}/api/lawyer/${lawyer_id}/reviews`)
+        .then(res => res.json())
+        .then(data => {
+          this.reviews = data.reviews || [];
+          this.averageRating = data.average_rating;
+        })
+        .catch(err => {
+          console.error('Error fetching reviews:', err);
+          this.reviews = [];
+          this.averageRating = null;
+        })
+        .finally(() => {
+          this.reviewsLoading = false;
+        });
     },
     goToBookingForm() {
       if (!this.selectedLawyer) {
@@ -273,9 +298,29 @@ watch: {
             </div>
 
             <div class="popup-column">
-              <img src="/images/stars-empty.png" class="stars">
+              <div class="overall-rating-bar" v-if="averageRating !== null">
+                <span v-for="n in 5" :key="n" class="star" :class="{ filled: n <= Math.round(averageRating) }">&#9733;</span>
+                <span class="overall-rating-value">{{ Math.round(averageRating) }} / 5</span>
+              </div>
               <h4 class="reviews">Reviews</h4>
-              <p>No reviews yet</p>
+              <div class="reviews-container">
+                <div v-if="reviewsLoading" class="review-loading">Loading reviews...</div>
+                <div v-else-if="reviews.length === 0" class="review-empty">No reviews yet</div>
+                <template v-else>
+                  <div v-for="review in reviews" :key="review.review_id" class="review-item">
+                    <div class="review-header">
+                      <img src="/images/profile-logo.png" class="review-profile-img" alt="Profile" />
+                      <div>
+                        <div class="review-username">{{ review.username }}</div>
+                        <div class="review-stars">
+                          <span v-for="n in 5" :key="n" class="review-star" :class="{ filled: n <= review.rating }">&#9733;</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="review-description">{{ review.review_description }}</div>
+                  </div>
+                </template>
+              </div>
             </div>
           </div>
     </div>

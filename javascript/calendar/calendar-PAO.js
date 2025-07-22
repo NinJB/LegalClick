@@ -4,16 +4,12 @@ const calendarApp = Vue.createApp({
         return {
             selectedDate: null,
             selectedYear: today.getFullYear(),
-            selectedMonth: today.getMonth(),
-            appointments: {
-                '2025-05-03': [{ time: '10:00 AM', title: 'Client Meeting' }],
-                '2025-05-05': [{ time: '1:00 PM', title: 'Consultation with Atty. Cruz' }]
-            }
+            selectedMonth: today.getMonth()
         };
     },
     computed: {
         formattedDate() {
-            return this.selectedDate ? new Date(this.selectedDate).toDateString() : 'Select a date';
+            return this.selectedDate ? this.formatDisplayDate(this.selectedDate) : 'Select a date';
         },
         dailyAppointments() {
             return this.appointments[this.selectedDate] || [];
@@ -34,40 +30,62 @@ const calendarApp = Vue.createApp({
         daysInMonthGrid() {
             const year = this.selectedYear;
             const month = this.selectedMonth;
-
-            const firstDay = new Date(year, month, 1).getDay(); // 0 = Sunday
-            const totalDays = new Date(year, month + 1, 0).getDate(); // last day of month
-
+            const firstDay = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
             const grid = [];
-
-            // Add empty cells before 1st of the month
             for (let i = 0; i < firstDay; i++) {
                 grid.push(null);
             }
-
             for (let day = 1; day <= totalDays; day++) {
                 const paddedDay = String(day).padStart(2, '0');
                 const paddedMonth = String(month + 1).padStart(2, '0');
                 const fullDate = `${year}-${paddedMonth}-${paddedDay}`;
                 grid.push(fullDate);
             }
-
             return grid;
+        },
+        daysWithAppointments() {
+            return new Set(Object.keys(this.appointments));
         }
     },
     methods: {
+        formatDisplayDate(dateStr) {
+            if (!dateStr) return '';
+            const [year, month, day] = dateStr.split('-');
+            const monthNames = [
+                'January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'
+            ];
+            return `${monthNames[parseInt(month, 10) - 1]} ${parseInt(day, 10)}, ${year}`;
+        },
         selectDate(date) {
             if (date) this.selectedDate = date;
+        },
+        updateCalendar() {
+            this.selectedDate = null;
+        },
+        // Dummy fetch for demonstration; replace with real fetch if needed
+        async fetchOngoingConsultations() {
+            // Example: populate appointments with correct date and time formatting
+            // Replace this with your real fetch logic as needed
+            const appts = {
+                '2025-07-20': [{ time: '01:00 PM', title: 'Consultation with Atty. Example' }],
+                '2025-07-21': [{ time: '10:30 AM', title: 'Client Meeting' }]
+            };
+            this.appointments = appts;
         }
+    },
+    async mounted() {
+        await this.fetchOngoingConsultations();
     },
     template: `
       <div class="calendar__container fadeInUp">
         <div class="calendar__panel">
           <div class="calendar__controls">
-            <select v-model="selectedMonth" @change="updateCalendar">
+            <select v-model.number="selectedMonth" @change="updateCalendar">
               <option v-for="(month, i) in months" :value="i">{{ month }}</option>
             </select>
-            <select v-model="selectedYear" @change="updateCalendar">
+            <select v-model.number="selectedYear" @change="updateCalendar">
               <option v-for="year in years" :value="year">{{ year }}</option>
             </select>
           </div>
@@ -79,11 +97,11 @@ const calendarApp = Vue.createApp({
               v-for="day in daysInMonthGrid" 
               :key="day || Math.random()" 
               class="calendar__day"
-              :class="{ active: day === selectedDate && day }"
+              :class="{ active: day === selectedDate && day, 'has-appointment': day && daysWithAppointments.has(day) }"
               @click="selectDate(day)"
               :disabled="!day"
             >
-              {{ day ? new Date(day).getDate() : '' }}
+              {{ day ? day.split('-')[2] : '' }}
             </button>
           </div>
         </div>

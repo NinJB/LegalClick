@@ -32,9 +32,9 @@ body {
 /* Layout & Container Styles */
 /****************************************************/
 .consultation__container {
-  padding: 2rem;
-  margin-left: 80px;
-  margin-top: 1em;
+  padding: 1rem 0.5rem;
+  margin-left: 60px;
+  margin-top: 0.5em;
   font-family: 'Segoe UI', sans-serif;
   color: #333;
   background-color: #f9f9f9;
@@ -42,7 +42,9 @@ body {
   box-sizing: border-box;
   transition: all 0.3s ease;
   border-radius: 1em;
-  margin-right: 1em;
+  margin-right: 0.5em;
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
 /****************************************************/
@@ -188,8 +190,8 @@ body {
   background-color: #fff;
   border: 1px solid #ddd;
   border-radius: 10px;
-  padding: 1rem 1.5rem;
-  margin-bottom: 1rem;
+  padding: 0.6rem 1rem;
+  margin-bottom: 0.5rem;
   transition: box-shadow 0.3s ease;
   cursor: pointer;
 }
@@ -362,4 +364,203 @@ select{
   justify-content: center;
   align-items: center;
   z-index: 9999;
+}
+
+/* Review Modal and Button Styles */
+.review-btn {
+  background-color: #e67e22;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5em 1.2em;
+  margin-top: 0.7em;
+  margin-right: 0.5em;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 6px rgba(250, 127, 26, 0.08);
+}
+.review-btn:hover {
+  background-color: #fa7f1a;
+  color: #fff;
+}
+
+.modal-content label {
+  display: block;
+  margin-bottom: 0.7em;
+  font-weight: 500;
+}
+.modal-content input[type="number"],
+.modal-content textarea {
+  width: 100%;
+  padding: 0.5em;
+  border: 1.5px solid #e67e22;
+  border-radius: 5px;
+  margin-top: 0.2em;
+  margin-bottom: 0.7em;
+  font-size: 1em;
+  background: #fafafa;
+  resize: vertical;
+}
+.modal-content input[type="number"]:focus,
+.modal-content textarea:focus {
+  border-color: #fa7f1a;
+  outline: none;
+}
+
+/* --- Improved Modal Section Styles --- */
+.modal-section {
+  margin-bottom: 1.5em;
+  padding-bottom: 1em;
+  border-bottom: 1px solid #f3e6d8;
+}
+.modal-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+.modal-section-title {
+  font-size: 1.2em;
+  font-weight: 700;
+  color: #e67e22;
+  margin-bottom: 0.7em;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+.detail-label {
+  font-weight: 600;
+  color: #555;
+  margin-right: 0.3em;
+}
+.detail-value {
+  color: #222;
+  font-weight: 400;
+}
+
+/* --- Recommendation Modal --- */
+.recommendation-modal {
+  background: #fff8f0;
+  border-left: 5px solid #e67e22;
+  border-radius: 8px;
+  padding: 1.5em 1.2em;
+  margin: 1em 0;
+}
+.recommendation-title {
+  font-size: 1.1em;
+  font-weight: 700;
+  color: #e67e22;
+  margin-bottom: 0.5em;
+}
+.recommendation-text {
+  font-size: 1.15em;
+  color: #444;
+  font-style: italic;
+}
+
+/* --- Review Modal Improvements --- */
+.review-modal {
+  padding: 2em;
+}
+.review-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  margin-bottom: 1em;
+}
+.review-modal-profile {
+  width: 2.5em;
+  height: 2.5em;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #f3e6d8;
+  background: #eee;
+}
+.review-modal-username {
+  font-weight: 700;
+  color: #e67e22;
+  font-size: 1.08em;
+}
+.review-modal-stars {
+  display: flex;
+  align-items: center;
+  gap: 0.1em;
+  margin-top: 0.2em;
+}
+.review-modal-star {
+  color: #e0e0e0;
+  font-size: 1.3em;
+  transition: color 0.2s;
+  cursor: pointer;
+}
+.review-modal-star.filled {
+  color: #f39c12;
+}
+.review-modal label {
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 0.3em;
+}
+.review-modal textarea {
+  min-height: 4em;
+  resize: vertical;
+  width: 95%;
+  padding: 0.5em;
+  border: 1.5px solid #e67e22;
+  border-radius: 5px;
+  margin-top: 0.2em;
+  margin-bottom: 0.7em;
+  font-size: 1em;
+  background: #fafafa;
+}
+.review-modal-submit {
+  background-color: #e67e22;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.6em 1.5em;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1em;
+  transition: background 0.2s;
+}
+.review-modal-submit:hover {
+  background-color: #fa7f1a;
+}
+
+.cancel-btn {
+  background-color: #fff;
+  color: #e67e22;
+  border: 2px solid #e67e22;
+  border-radius: 6px;
+  padding: 0.6em 1.5em;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1em;
+  margin-left: 0.7em;
+  transition: background 0.2s, color 0.2s;
+}
+.cancel-btn:hover {
+  background-color: #fbeee0;
+  color: #d35400;
+  border-color: #d35400;
+}
+
+.consultation__card-list {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+.consultation__card-list::-webkit-scrollbar {
+  width: 8px;
+}
+.consultation__card-list::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 4px;
+}
+.consultation__card-list::-webkit-scrollbar-thumb:hover {
+  background-color: #aaa;
 }

@@ -27,7 +27,8 @@ const lawyer_requests = Vue.createApp({
   methods: {
     async fetchRequests() {
       try {
-        const response = await fetch(`http://localhost:5500/api/lawyer/${this.lawyerId}/requests`);
+        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const response = await fetch(`${baseUrl}/api/lawyer/${this.lawyerId}/requests`);
         const data = await response.json();
         this.requests = data;
       } catch (error) {

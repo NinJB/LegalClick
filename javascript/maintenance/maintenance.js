@@ -146,7 +146,8 @@ Vue.createApp({
     },
     async getSpecializations() {
       try {
-        const res = await fetch('http://localhost:5500/api/view-specializations');
+        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const res = await fetch(`${baseUrl}/api/view-specializations`);
         this.specializations = await res.json();
       } catch (error) {
         console.error('Error fetching specializations:', error);

@@ -28,7 +28,8 @@ const secretaryProfile = Vue.createApp({
     const params = new URLSearchParams(window.location.search);
     this.roleId = params.get('role_id');
 
-    const res = await fetch(`http://localhost:5500/api/secretary/by-role/${this.roleId}`);
+    const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+    const res = await fetch(`${baseUrl}/api/secretary/by-role/${this.roleId}`);
     const data = await res.json();
 
     this.secretary = data;
@@ -46,8 +47,8 @@ const secretaryProfile = Vue.createApp({
         this.usernameError = false;
         return;
       }
-
-      const res = await fetch('http://localhost:5500/api/check-username', {
+      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const res = await fetch(`${baseUrl}/api/check-username`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -71,7 +72,8 @@ const secretaryProfile = Vue.createApp({
         contact_number: this.form.contact_number
       };
 
-      const response = await fetch(`http://localhost:5500/api/secretary/update/${this.secretary.secretary_id}`, {
+      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const response = await fetch(`${baseUrl}/api/secretary/update/${this.secretary.secretary_id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updateData)

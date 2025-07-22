@@ -28,7 +28,8 @@ const consultation = Vue.createApp({
     async fetchApprovedLawyers() {
       this.loading = true;
       try {
-        const res = await fetch(`http://localhost:5500/api/secretary-lawyers-view/${this.secretaryId}`);
+        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const res = await fetch(`${baseUrl}/api/secretary-lawyers-view/${this.secretaryId}`);
         if (!res.ok) throw new Error('Failed to fetch lawyers.');
         const data = await res.json();
 
@@ -55,7 +56,8 @@ const consultation = Vue.createApp({
       this.loading = true;
       this.error = null;
       try {
-        const res = await fetch(`http://localhost:5500/consultations?lawyer_id=${this.selectedLawyerId}`);
+        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const res = await fetch(`${baseUrl}/consultations?lawyer_id=${this.selectedLawyerId}`);
         if (!res.ok) throw new Error('Failed to load consultations');
         const consultationsData = await res.json();
 
@@ -66,7 +68,7 @@ const consultation = Vue.createApp({
 
         const clientIds = [...new Set(this.consultations.map(c => c.client_id))];
         const clientPromises = clientIds.map(id =>
-          fetch(`http://localhost:5500/api/clients/${id}`).then(r => r.ok ? r.json() : null)
+          fetch(`${baseUrl}/api/clients/${id}`).then(r => r.ok ? r.json() : null)
         );
         const clients = await Promise.all(clientPromises);
 
@@ -96,7 +98,8 @@ const consultation = Vue.createApp({
       if (!consultation) return;
 
       try {
-        const res = await fetch(`http://localhost:5500/api/consultations-update/${consultationId}`, {
+        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const res = await fetch(`${baseUrl}/api/consultations-update/${consultationId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ consultation_status: newStatus })
@@ -141,7 +144,10 @@ const consultation = Vue.createApp({
   },
   computed: {
     filteredConsultations() {
-      return this.consultations.filter(c => c.consultation_status === this.selectedStatus);
+      // Sort by consultation_date ascending (soonest first)
+      return this.consultations
+        .filter(c => c.consultation_status === this.selectedStatus)
+        .sort((a, b) => new Date(a.consultation_date) - new Date(b.consultation_date));
     }
   },
   template: `

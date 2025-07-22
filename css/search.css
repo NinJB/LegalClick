@@ -497,3 +497,117 @@ button:hover {
   width: 5em;
   height: 5em;
 }
+
+/* Improved Review Card Styles */
+.reviews-container {
+  max-height: 30em;
+  min-height: 20em;
+  height: 30em;
+  overflow-y: auto;
+  border-radius: 12px;
+  padding: 0.7em 0.5em;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7em;
+  box-sizing: border-box;
+}
+.review-item {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(230, 126, 34, 0.08);
+  padding: 1em 1.2em 0.8em 1.2em;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+  border: 1px solid #f3e6d8;
+  transition: box-shadow 0.2s;
+}
+.review-item:hover {
+  box-shadow: 0 4px 18px rgba(230, 126, 34, 0.16);
+}
+.review-header {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  margin-bottom: 0.2em;
+}
+.review-profile-img {
+  width: 2.5em;
+  height: 2.5em;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #f3e6d8;
+  background: #eee;
+}
+.review-username {
+  font-weight: 700;
+  color: #e67e22;
+  font-size: 1.08em;
+  margin-bottom: 0.1em;
+  margin-right: 0.5em;
+  text-align: left;
+}
+.review-stars {
+  display: flex;
+  align-items: center;
+  gap: 0.1em;
+  margin-right: 0.5em;
+}
+.review-star {
+  color: #e0e0e0;
+  font-size: 1.1em;
+  transition: color 0.2s;
+}
+.review-star.filled {
+  color: #f39c12;
+}
+.review-rating {
+  color: #444;
+  font-size: 1em;
+  font-weight: 600;
+  margin-bottom: 0.1em;
+  margin-left: 0.2em;
+  text-align: left;
+}
+.review-description {
+  color: #444;
+  font-size: 1em;
+  margin-top: 0.2em;
+  line-height: 1.5;
+  word-break: break-word;
+  text-align: left;
+}
+.review-loading,
+.review-empty {
+  text-align: center;
+  color: #888;
+  font-style: italic;
+  font-size: 1.05em;
+  margin-top: 2em;
+}
+
+/* Overall Rating Bar Styles */
+.overall-rating-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5em;
+  font-size: 1.5em;
+  gap: 0.2em;
+  justify-content: center;
+}
+.star {
+  color: #e0e0e0;
+  font-size: 1.3em;
+  transition: color 0.2s;
+}
+.star.filled {
+  color: #e67e22;
+}
+.overall-rating-value {
+  margin-left: 0.5em;
+  font-size: 1em;
+  font-weight: bold;
+  color: #e67e22;
+}

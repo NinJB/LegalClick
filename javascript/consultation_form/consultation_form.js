@@ -96,7 +96,8 @@ const ConsultationForm = {
   async mounted() {
     // Fetch specializations first
     try {
-      const specRes = await fetch('http://localhost:5500/api/specializations');
+      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+      const specRes = await fetch(`${baseUrl}/api/specializations`);
       if (!specRes.ok) throw new Error('Failed to load specializations');
       this.specializations = await specRes.json();
     } catch (e) {
@@ -117,11 +118,12 @@ const ConsultationForm = {
     this.form.client_id = clientId;
 
     try {
+      const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
       const [lawyerRes, clientRes, availabilityRes, servicesRes] = await Promise.all([
-        fetch(`http://localhost:5500/api/lawyers/${lawyerId}`),
-        fetch(`http://localhost:5500/api/clients/${clientId}`),
-        fetch(`http://localhost:5500/api/lawyer_availability/${lawyerId}`),
-        fetch(`http://localhost:5500/api/lawyer_services/${lawyerId}`)
+        fetch(`${baseUrl}/api/lawyers/${lawyerId}`),
+        fetch(`${baseUrl}/api/clients/${clientId}`),
+        fetch(`${baseUrl}/api/lawyer_availability/${lawyerId}`),
+        fetch(`${baseUrl}/api/lawyer_services/${lawyerId}`)
       ]);
 
       if (!lawyerRes.ok || !clientRes.ok || !availabilityRes.ok || !servicesRes.ok) {
@@ -185,7 +187,8 @@ const ConsultationForm = {
       formData.append('payment_mode', this.form.payment_mode);
 
       try {
-        const res = await fetch('http://localhost:5500/api/consultation', {
+        const baseUrl = window.API_BASE_URL || 'http://localhost:5500';
+        const res = await fetch(`${baseUrl}/api/consultation`, {
           method: 'POST',
           body: formData,
         });
