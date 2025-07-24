@@ -18,3 +18,4 @@ echo "🚀 Importing '$SQL_FILE' into $DB_NAME"
 psql -U $DB_USER -d $DB_NAME -f "$SQL_FILE"
 
 echo "✅ Done! Database '$DB_NAME' has been reset."
+echo "Test."

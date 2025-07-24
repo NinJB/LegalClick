@@ -1,4 +1,4 @@
-(async => {
+(async () => {
 
 
   const express = require('express');
