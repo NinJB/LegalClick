@@ -4,6 +4,6 @@ echo "⚙️ Resetting repo to match remote 'main'..."
 
 git reset --hard
 git clean -fd
-git pull origin main
+git pull --rebase origin web-hosting
 
 echo "✅ Repo updated successfully!"
