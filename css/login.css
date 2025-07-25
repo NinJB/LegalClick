@@ -161,3 +161,48 @@ body {
     background-color: #fafafa;
     color: rgb(250, 127, 26);
   }
+
+/********************************************************************************************************************/
+/*****************************************MOBILE RESPONSIVE*************************************************/
+/*PHONES*/
+@media screen and (max-width: 595px){
+  .login{
+    display: flex;
+    justify-content: center;  /* horizontal center */
+    align-items: center;  
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .login-container{
+    transform: scale(0.7);
+  }
+}
+
+/*******************************************************************************************************************/
+/*TABLET*/
+@media screen and (min-width: 768px) and (max-width: 768px){
+ .login{
+    display: flex;
+    justify-content: center;  /* horizontal center */
+    align-items: center;  
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .login-container{
+    transform: scale(0.8);
+  }
+}
+
+/*******************************************************************************************************************/
+/*SCREEN LAPTOPS // DESKTOPS*/
+@media screen and (min-width: 2560px) and (max-width: 2560px){
+  .login-container{
+    transform: scale(1.5);
+  }
+}
+
+/*******************************************************************************************************************/
