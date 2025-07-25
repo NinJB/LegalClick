@@ -4,12 +4,19 @@
 
 const app = Vue.createApp({
   data() {
+    // Decode JWT from sessionStorage
+    let roleId = null;
+    const token = sessionStorage.getItem('jwt');
+    if (token) {
+      const payload = window.decodeJWT ? window.decodeJWT(token) : JSON.parse(atob(token.split('.')[1]));
+      roleId = payload && payload.role_id;
+    }
     return {
       showProfileMenu: false,
       showNotifications: false,
       notifications: [],
       unreadCount: 0,
-      roleId: new URLSearchParams(window.location.search).get('role_id')
+      roleId: roleId
     };
   },
   methods: {
@@ -18,7 +25,7 @@ const app = Vue.createApp({
     },
     async fetchNotifications() {
       const baseUrl = window.API_BASE_URL;
-      const res = await fetch(`${baseUrl}/api/notifications/client?user_id=${this.roleId}`);
+      const res = await fetch(`${baseUrl}/api/notifications/client?user_id=${this.roleId}`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } });
       if (res.ok) {
         this.notifications = await res.json();
         this.unreadCount = this.notifications.filter(n => n.notification_status !== 'read').length;
@@ -61,18 +68,23 @@ const app = Vue.createApp({
       e.stopPropagation();
       if (notif.notification_status === 'read') return;
       const baseUrl = window.API_BASE_URL;
-      await fetch(`${baseUrl}/api/notifications/${notif.notification_id}/read`, { method: 'PATCH' });
+      await fetch(`${baseUrl}/api/notifications/${notif.notification_id}/read`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': 'Bearer ' + sessionStorage.getItem('jwt')
+        }
+      });
       notif.notification_status = 'read';
       this.unreadCount = this.notifications.filter(n => n.notification_status !== 'read').length;
     },
     handleNotificationClick(notif) {
       // Navigation by purpose
       if (notif.notification_purpose === 'request' || notif.notification_purpose === 'rejected' || notif.notification_purpose === 'approved' || notif.notification_purpose === 'accepted') {
-        window.location.href = '/html/client/consultation.html?role_id=' + this.roleId;
+        window.location.href = '/html/client/consultation.html';
       } else if (notif.notification_purpose === 'application') {
-        window.location.href = '/html/client/search.html?role_id=' + this.roleId;
+        window.location.href = '/html/client/search.html';
       } else if (notif.notification_purpose === 'reschedule') {
-        window.location.href = '/html/client/calendar.html?role_id=' + this.roleId;
+        window.location.href = '/html/client/calendar.html';
       }
     },
     toggleNotifications() {
@@ -122,7 +134,7 @@ const app = Vue.createApp({
               <img src="/images/profile-logo.png" class="nav-logo">
             </div>
             <div v-show="showProfileMenu" class="profile-menu">
-              <a :href="'/html/client/profile.html?role_id=' + roleId">Profile</a>
+              <a href="/html/client/profile.html">Profile</a>
               <a href="/index.html">Logout</a>
             </div>
           </div>
@@ -132,25 +144,25 @@ const app = Vue.createApp({
       <!-- Side Navigation -->
       <aside class="side-nav">
         <nav>
-          <a :href="'/html/client/search.html?role_id=' + roleId" class="chosen-dashboard" data-icon="search">
+          <a href="/html/client/search.html" class="chosen-dashboard" data-icon="search">
             <div class="icon-wrapper">
               <img src="/images/search-gray.png" class="icon-img" />
               <span class="icon-label">Search</span>
             </div>
           </a>
-          <a :href="'/html/client/messages.html?role_id=' + roleId" class="chosen-dashboard" data-icon="message">
+          <a href="/html/client/messages.html" class="chosen-dashboard" data-icon="message">
             <div class="icon-wrapper">
               <img src="/images/message-gray.png" class="icon-img" />
               <span class="icon-label">Messages</span>
             </div>
           </a>
-          <a :href="'/html/client/consultation.html?role_id=' + roleId" class="chosen-dashboard" data-icon="consultation">
+          <a href="/html/client/consultation.html" class="chosen-dashboard" data-icon="consultation">
             <div class="icon-wrapper">
               <img src="/images/consultation-gray.png" class="icon-img" />
               <span class="icon-label">Consultations</span>
             </div>
           </a>
-          <a :href="'/html/client/calendar.html?role_id=' + roleId" class="chosen-dashboard" data-icon="calendar">
+          <a href="/html/client/calendar.html" class="chosen-dashboard" data-icon="calendar">
             <div class="icon-wrapper">
               <img src="/images/calendar-gray.png" class="icon-img" />
               <span class="icon-label">Calendar</span>

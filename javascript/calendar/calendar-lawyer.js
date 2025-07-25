@@ -109,21 +109,27 @@ const calendarLawyerApp = Vue.createApp({
             this.loading = true;
             this.error = null;
             try {
-                const urlParams = new URLSearchParams(window.location.search);
-                this.lawyerId = urlParams.get('role_id');
+                // Decode JWT from sessionStorage
+                const token = sessionStorage.getItem('jwt');
+                let lawyerId = null;
+                if (token) {
+                  const payload = window.decodeJWT ? window.decodeJWT(token) : JSON.parse(atob(token.split('.')[1]));
+                  lawyerId = payload && payload.role_id;
+                }
+                this.lawyerId = lawyerId;
                 if (!this.lawyerId) {
-                    this.error = "Missing lawyer ID (role_id) in URL.";
+                    this.error = "Missing lawyer ID in token.";
                     this.loading = false;
                     return;
                 }
                 const baseUrl = window.API_BASE_URL;
-                const res = await fetch(`${baseUrl}/consultations?lawyer_id=${this.lawyerId}`);
+                const res = await fetch(`${baseUrl}/consultations?lawyer_id=${this.lawyerId}`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } });
                 if (!res.ok) throw new Error('Failed to load consultations');
                 const consultations = await res.json();
                 const upcoming = consultations.filter(c => c.consultation_status === 'Upcoming');
                 // Fetch client names for each consultation
                 const clientIds = [...new Set(upcoming.map(c => c.client_id))];
-                const clientPromises = clientIds.map(id => fetch(`${baseUrl}/api/clients/${id}`));
+                const clientPromises = clientIds.map(id => fetch(`${baseUrl}/api/clients/${id}`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } }));
                 const clientResponses = await Promise.all(clientPromises);
                 const clients = {};
                 for (let i = 0; i < clientIds.length; i++) {
@@ -213,7 +219,7 @@ const calendarLawyerApp = Vue.createApp({
             this.validRescheduleTimes = [];
             try {
                 const baseUrl = window.API_BASE_URL;
-                const res = await fetch(`${baseUrl}/api/lawyer_availability/${this.lawyerId}`);
+                const res = await fetch(`${baseUrl}/api/lawyer_availability/${this.lawyerId}`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } });
                 if (res.ok) {
                     this.lawyerAvailability = await res.json();
                     this.validRescheduleTimes = this.generateValidTimes(this.lawyerAvailability);
@@ -270,7 +276,7 @@ const calendarLawyerApp = Vue.createApp({
                 const baseUrl = window.API_BASE_URL;
                 const res = await fetch(`${baseUrl}/api/consultations-reschedule/${this.rescheduleConsultationId}`, {
                     method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') },
                     body: JSON.stringify({
                         consultation_date: this.rescheduleDate,
                         consultation_time: this.rescheduleTime

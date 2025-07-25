@@ -10,44 +10,44 @@ const Password = Vue.createApp({
       };
     },
     mounted() {
-      const params = new URLSearchParams(window.location.search);
-      this.roleId = params.get('role_id');
-  
+      // Decode JWT from sessionStorage
+      const token = sessionStorage.getItem('jwt');
+      if (!token) {
+        this.error = 'Not authenticated.';
+        return;
+      }
+      const payload = window.decodeJWT ? window.decodeJWT(token) : JSON.parse(atob(token.split('.')[1]));
+      this.roleId = payload && payload.role_id;
       if (!this.roleId) {
-        this.error = 'Missing role ID in URL.';
+        this.error = 'Missing role ID in token.';
       }
     },
     methods: {
       async changePassword() {
         this.message = '';
         this.error = '';
-  
         if (!this.roleId) {
           this.error = 'Missing role ID.';
           return;
         }
-  
         try {
           const response = await fetch(`${window.API_BASE_URL}/api/change-password-client/${this.roleId}`, {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + sessionStorage.getItem('jwt')
             },
             body: JSON.stringify({
-              roleId: this.roleId,
               oldPassword: this.oldPassword,
               newPassword: this.newPassword,
               confirmPassword: this.confirmPassword
             })
           });
-  
           const data = await response.json();
-  
           if (!response.ok) {
             this.error = data.message || 'Failed to change password.';
             return;
           }
-  
           this.message = data.message;
           this.oldPassword = '';
           this.newPassword = '';
@@ -63,13 +63,11 @@ const Password = Vue.createApp({
           <div class="profile__title">
             <h2>Account Details</h2>
           </div>
-
           <div class="profile__options">
-            <a :href="'/html/client/profile.html?role_id=' + roleId"><button>Profile Information</button></a>
+            <a href="/html/client/profile.html"><button>Profile Information</button></a>
             <a><button>Change Password</button></a>
           </div>
         </section>
-        
         <section class="password-container">
           <h2>Change Password</h2>
           <form @submit.prevent="changePassword">

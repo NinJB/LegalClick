@@ -95,7 +95,7 @@ const search = Vue.createApp({
         url += `?${params.toString()}`;
       }
 
-      fetch(url)
+      fetch(url, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } })
         .then(res => res.json())
         .then(data => {
           this.lawyers = data;
@@ -104,7 +104,7 @@ const search = Vue.createApp({
     },
     fetchSpecializations() {
       const baseUrl = window.API_BASE_URL;
-      fetch(`${baseUrl}/api/specializations`)
+      fetch(`${baseUrl}/api/specializations`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } })
         .then(res => res.json())
         .then(data => {
           this.specializations = data;
@@ -130,7 +130,7 @@ const search = Vue.createApp({
     },
     fetchLawyerDetails(lawyer_id) {
       const baseUrl = window.API_BASE_URL;
-      fetch(`${baseUrl}/api/lawyer-details/${lawyer_id}`)
+      fetch(`${baseUrl}/api/lawyer-details/${lawyer_id}`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } })
         .then(res => res.json())
         .then(data => {
           this.lawyerAvailability = data.availability;
@@ -153,7 +153,7 @@ const search = Vue.createApp({
       if (!this.loggedInRoleId) return;
       
       const baseUrl = window.API_BASE_URL;
-      fetch(`${baseUrl}/api/check-secretary-lawyers?role_id=${this.loggedInRoleId}`)
+      fetch(`${baseUrl}/api/check-secretary-lawyers?role_id=${this.loggedInRoleId}`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } })
         .then(res => res.json())
         .then(data => {
           this.existingRequests = data;
@@ -167,18 +167,18 @@ const search = Vue.createApp({
       }
 
       if (!this.loggedInRoleId) {
-        alert('Client not logged in. Please make sure you are logged in and role_id is saved in localStorage.');
+        alert('Client not logged in. Please make sure you are logged in.');
         return;
       }
 
       const lawyerId = this.selectedLawyer.lawyer_id;
-      const clientId = this.loggedInRoleId;
-      const bookingUrl = `/html/client/form.html?lawyer_id=${lawyerId}&client_id=${clientId}`;
+      // Use only lawyerId, not clientId in URL
+      const bookingUrl = `/html/client/form.html?lawyer_id=${lawyerId}`;
       window.location.href = bookingUrl;
     },
     fetchLawyerServicesList() {
       const baseUrl = window.API_BASE_URL;
-      fetch(`${baseUrl}/api/lawyer-services`)
+      fetch(`${baseUrl}/api/lawyer-services`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } })
       .then(res => res.json())
       .then(data => {
         this.lawyerServicesList = data;
@@ -223,6 +223,7 @@ const search = Vue.createApp({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + sessionStorage.getItem('jwt')
         },
         body: JSON.stringify(requestData)
       })
@@ -252,9 +253,14 @@ const search = Vue.createApp({
     }
   },
   mounted() {
-    const urlParams = new URLSearchParams(window.location.search);
-    this.loggedInRoleId = urlParams.get('role_id');
-
+    // Decode JWT from sessionStorage
+    const token = sessionStorage.getItem('jwt');
+    if (!token) {
+      this.loggedInRoleId = null;
+    } else {
+      const payload = window.decodeJWT ? window.decodeJWT(token) : JSON.parse(atob(token.split('.')[1]));
+      this.loggedInRoleId = payload && payload.role_id;
+    }
     this.fetchSpecializations();
     this.fetchLawyers();
     this.fetchLawyerServicesList();
@@ -397,7 +403,7 @@ const search = Vue.createApp({
           <p>Proceed to 'Lawyers' to view request status.</p>
           <div class="buttons-list">
             <button @click="closeSuccessPopup" class="popup-button no-button">Skip</button>
-            <a :href="'/html/secretary/lawyers.html?role_id=' + loggedInRoleId"><button class="popup-button yes-button">Go to Lawyers</button></a>
+            <a :href="'/html/secretary/lawyers.html'"><button class="popup-button yes-button">Go to Lawyers</button></a>
           </div>
         </div>
       </div>

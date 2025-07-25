@@ -66,8 +66,17 @@ const calendarApp = Vue.createApp({
         },
         // Dummy fetch for demonstration; replace with real fetch if needed
         async fetchOngoingConsultations() {
+            // Decode JWT from sessionStorage (future-proofing)
+            let roleId = null;
+            const token = sessionStorage.getItem('jwt');
+            if (token) {
+              const payload = window.decodeJWT ? window.decodeJWT(token) : JSON.parse(atob(token.split('.')[1]));
+              roleId = payload && payload.role_id;
+            }
             // Example: populate appointments with correct date and time formatting
             // Replace this with your real fetch logic as needed
+            // If you ever fetch, add Authorization header:
+            // const res = await fetch('your-api-url', { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } });
             const appts = {
                 '2025-07-20': [{ time: '01:00 PM', title: 'Consultation with Atty. Example' }],
                 '2025-07-21': [{ time: '10:30 AM', title: 'Client Meeting' }]

@@ -89,17 +89,22 @@ const calendarApp = Vue.createApp({
             this.updateCalendar();
         },
         async fetchOngoingConsultations() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const clientId = urlParams.get('role_id');
+            // Decode JWT from sessionStorage
+            const token = sessionStorage.getItem('jwt');
+            let clientId = null;
+            if (token) {
+              const payload = window.decodeJWT ? window.decodeJWT(token) : JSON.parse(atob(token.split('.')[1]));
+              clientId = payload && payload.role_id;
+            }
             if (!clientId) return;
             try {
                 const baseUrl = window.API_BASE_URL;
-                const res = await fetch(`${baseUrl}/api/consultations?client_id=${clientId}`);
+                const res = await fetch(`${baseUrl}/api/consultations?client_id=${clientId}`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } });
                 if (!res.ok) throw new Error('Failed to load consultations');
                 const consultations = await res.json();
                 const upcoming = consultations.filter(c => c.consultation_status === 'Upcoming');
                 const lawyerIds = [...new Set(upcoming.map(c => c.lawyer_id))];
-                const lawyerPromises = lawyerIds.map(id => fetch(`${baseUrl}/api/lawyers/${id}`));
+                const lawyerPromises = lawyerIds.map(id => fetch(`${baseUrl}/api/lawyers/${id}`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } }));
                 const lawyerResponses = await Promise.all(lawyerPromises);
                 const lawyers = {};
                 for (let i = 0; i < lawyerIds.length; i++) {

@@ -73,6 +73,13 @@ Vue.createApp({
     </div>
   `,
   data() {
+    // Decode JWT from sessionStorage
+    let roleId = null;
+    const token = sessionStorage.getItem('jwt');
+    if (token) {
+      const payload = window.decodeJWT ? window.decodeJWT(token) : JSON.parse(atob(token.split('.')[1]));
+      roleId = payload && payload.role_id;
+    }
     return {
       activeForm: 'admin',
       showAdminModal: false,
@@ -89,7 +96,7 @@ Vue.createApp({
       specialization_name: '',
       specializationMessage: '',
       specializations: [],
-      roleId: new URLSearchParams(window.location.search).get('role_id')
+      roleId: roleId
     };
   },
   methods: {
@@ -97,7 +104,7 @@ Vue.createApp({
       try {
         const response = await fetch(`${window.API_BASE_URL}/api/add-admin`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') },
           body: JSON.stringify({ ...this.admin, role_id: this.roleId })
         });
         const result = await response.json();
@@ -120,7 +127,7 @@ Vue.createApp({
     },
     async getRoleAdmins() {
       try {
-        const res = await fetch(`${window.API_BASE_URL}/api/admins/role/${this.roleId}`);
+        const res = await fetch(`${window.API_BASE_URL}/api/admins/role/${this.roleId}`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } });
         this.roleAdmins = await res.json();
       } catch (error) {
         console.error('Error fetching admins:', error);
@@ -130,7 +137,7 @@ Vue.createApp({
       try {
         const res = await fetch(`${window.API_BASE_URL}/api/add-specializations`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') },
           body: JSON.stringify({ specialization_name: this.specialization_name })
         });
         const result = await res.json();
@@ -147,7 +154,7 @@ Vue.createApp({
     async getSpecializations() {
       try {
         const baseUrl = window.API_BASE_URL;
-        const res = await fetch(`${baseUrl}/api/view-specializations`);
+        const res = await fetch(`${baseUrl}/api/view-specializations`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } });
         this.specializations = await res.json();
       } catch (error) {
         console.error('Error fetching specializations:', error);
@@ -156,7 +163,8 @@ Vue.createApp({
     async removeSpecialization(id) {
       try {
         await fetch(`${window.API_BASE_URL}/api/delete-specializations/${id}`, {
-          method: 'DELETE'
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }
         });
         this.getSpecializations();
       } catch (error) {

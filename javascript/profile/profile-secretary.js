@@ -25,15 +25,20 @@ const secretaryProfile = Vue.createApp({
     };
   },
   async created() {
-    const params = new URLSearchParams(window.location.search);
-    this.roleId = params.get('role_id');
-
+    // Decode JWT from sessionStorage
+    const token = sessionStorage.getItem('jwt');
+    if (!token) {
+      this.error = 'Not authenticated.';
+      return;
+    }
+    const payload = window.decodeJWT ? window.decodeJWT(token) : JSON.parse(atob(token.split('.')[1]));
+    this.roleId = payload && payload.role_id;
     const baseUrl = window.API_BASE_URL;
-    const res = await fetch(`${baseUrl}/api/secretary/by-role/${this.roleId}`);
+    const res = await fetch(`${baseUrl}/api/secretary/by-role/${this.roleId}`, {
+      headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }
+    });
     const data = await res.json();
-
     this.secretary = data;
-
     this.form.username = data.username;
     this.form.first_name = data.first_name;
     this.form.last_name = data.last_name;
@@ -102,7 +107,7 @@ const secretaryProfile = Vue.createApp({
 
         <div class="profile__options">
           <a><button>Profile Information</button></a>
-          <a :href="'/html/secretary/settings.html?role_id=' + roleId"><button>Change Password</button></a>
+          <a href="/html/secretary/settings.html"><button>Change Password</button></a>
         </div>
       </section>
 

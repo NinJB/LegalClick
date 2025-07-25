@@ -15,8 +15,14 @@ const secretary_request = Vue.createApp({
     }
   },
   mounted() {
-    const params = new URLSearchParams(window.location.search);
-    this.secretaryId = params.get('role_id');
+    // Decode JWT from sessionStorage
+    const token = sessionStorage.getItem('jwt');
+    if (!token) {
+      this.secretaryId = null;
+    } else {
+      const payload = window.decodeJWT ? window.decodeJWT(token) : JSON.parse(atob(token.split('.')[1]));
+      this.secretaryId = payload && payload.role_id;
+    }
     this.fetchRequests();
     document.addEventListener('keydown', this.handleEscape);
   },
@@ -27,7 +33,9 @@ const secretary_request = Vue.createApp({
     async fetchRequests() {
       try {
         const baseUrl = window.API_BASE_URL;
-        const response = await fetch(`${baseUrl}/api/secretary/${this.secretaryId}/requests`);
+        const response = await fetch(`${baseUrl}/api/secretary/${this.secretaryId}/requests`, {
+          headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }
+        });
         const data = await response.json();
         console.log('Fetched requests:', data);
         this.requests = data;
@@ -51,7 +59,8 @@ const secretary_request = Vue.createApp({
         console.log("Selected request in removeConfirmed:", this.selectedRequest);
         const baseUrl = window.API_BASE_URL;
         const response = await fetch(`${baseUrl}/api/secretary/requests/${this.selectedRequest.work_id}`, {
-          method: 'DELETE'
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }
         });
         if (response.ok) {
           this.requests = this.requests.filter(req => req.work_id !== this.selectedRequest.work_id);

@@ -87,7 +87,7 @@ const search = Vue.createApp({
         url += `?${params.toString()}`;
       }
 
-      fetch(url)
+      fetch(url, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } })
         .then(res => res.json())
         .then(data => {
           this.lawyers = data;
@@ -96,7 +96,7 @@ const search = Vue.createApp({
     },
     fetchSpecializations() {
       const baseUrl = window.API_BASE_URL;
-      fetch(`${baseUrl}/api/specializations`)
+      fetch(`${baseUrl}/api/specializations`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } })
         .then(res => res.json())
         .then(data => {
           this.specializations = data;
@@ -122,7 +122,7 @@ const search = Vue.createApp({
     },
     fetchLawyerDetails(lawyer_id) {
       const baseUrl = window.API_BASE_URL;
-      fetch(`${baseUrl}/api/lawyer-details/${lawyer_id}`)
+      fetch(`${baseUrl}/api/lawyer-details/${lawyer_id}`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } })
         .then(res => res.json())
         .then(data => {
           this.lawyerAvailability = data.availability;
@@ -144,7 +144,7 @@ const search = Vue.createApp({
     fetchLawyerReviews(lawyer_id) {
       this.reviewsLoading = true;
       const baseUrl = window.API_BASE_URL;
-      fetch(`${baseUrl}/api/lawyer/${lawyer_id}/reviews`)
+      fetch(`${baseUrl}/api/lawyer/${lawyer_id}/reviews`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } })
         .then(res => res.json())
         .then(data => {
           this.reviews = data.reviews || [];
@@ -166,18 +166,18 @@ const search = Vue.createApp({
       }
 
       if (!this.loggedInRoleId) {
-        alert('Client not logged in. Please make sure you are logged in and role_id is saved in localStorage.');
+        alert('Client not logged in. Please make sure you are logged in.');
         return;
       }
 
       const lawyerId = this.selectedLawyer.lawyer_id;
-      const clientId = this.loggedInRoleId;
-      const bookingUrl = `/html/client/form.html?lawyer_id=${lawyerId}&client_id=${clientId}`;
+      // Use only lawyerId, not clientId in URL
+      const bookingUrl = `/html/client/form.html?lawyer_id=${lawyerId}`;
       window.location.href = bookingUrl;
     },
     fetchLawyerServicesList() {
       const baseUrl = window.API_BASE_URL;
-      fetch(`${baseUrl}/api/lawyer-services`)  // expects array here
+      fetch(`${baseUrl}/api/lawyer-services`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } })  // expects array here
       .then(res => res.json())
       .then(data => {
         this.lawyerServicesList = data;  // now an array
@@ -199,9 +199,14 @@ const search = Vue.createApp({
     }
   },
   mounted() {
-    const urlParams = new URLSearchParams(window.location.search);
-    this.loggedInRoleId = urlParams.get('role_id');
-
+    // Decode JWT from sessionStorage
+    const token = sessionStorage.getItem('jwt');
+    if (!token) {
+      this.loggedInRoleId = null;
+    } else {
+      const payload = window.decodeJWT ? window.decodeJWT(token) : JSON.parse(atob(token.split('.')[1]));
+      this.loggedInRoleId = payload && payload.role_id;
+    }
     this.fetchSpecializations();
     this.fetchLawyers();
     this.fetchLawyerServicesList();
@@ -336,7 +341,7 @@ const search = Vue.createApp({
         <p>Attorney, please set-up your lawyer services and specializations to receive consultations. Thank you!</p>
         <div class="buttons-setup">
           <button @click="closeMismatchPopup" class="skip">Skip</button>
-          <a :href="'/html/lawyer/specialization.html?role_id=' + loggedInRoleId"><button class="proceed">Finish Set-Up</button></a>
+          <a :href="'/html/lawyer/specialization.html'"><button class="proceed">Finish Set-Up</button></a>
         </div>
       </div>
     </div>

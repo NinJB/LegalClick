@@ -16,8 +16,14 @@ const lawyer_requests = Vue.createApp({
     }
   },
   mounted() {
-    const params = new URLSearchParams(window.location.search);
-    this.lawyerId = params.get('role_id');
+    // Decode JWT from sessionStorage
+    const token = sessionStorage.getItem('jwt');
+    if (!token) {
+      this.lawyerId = null;
+    } else {
+      const payload = window.decodeJWT ? window.decodeJWT(token) : JSON.parse(atob(token.split('.')[1]));
+      this.lawyerId = payload && payload.role_id;
+    }
     this.fetchRequests();
     document.addEventListener('keydown', this.handleEscape);
   },
@@ -28,7 +34,9 @@ const lawyer_requests = Vue.createApp({
     async fetchRequests() {
       try {
         const baseUrl = window.API_BASE_URL;
-        const response = await fetch(`${baseUrl}/api/lawyer/${this.lawyerId}/requests`);
+        const response = await fetch(`${baseUrl}/api/lawyer/${this.lawyerId}/requests`, {
+          headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }
+        });
         const data = await response.json();
         this.requests = data;
       } catch (error) {
@@ -62,7 +70,7 @@ const lawyer_requests = Vue.createApp({
       try {
         const response = await fetch(url, {
           method,
-          headers: method !== 'DELETE' ? { 'Content-Type': 'application/json' } : undefined,
+          headers: method !== 'DELETE' ? { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } : { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') },
           body
         });
 

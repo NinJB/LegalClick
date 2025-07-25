@@ -19,47 +19,52 @@ const consultation = Vue.createApp({
     };
   },
   async mounted() {
-    const urlParams = new URLSearchParams(window.location.search);
-    this.lawyerId = urlParams.get('role_id');
-
-    if (!this.lawyerId) {
-      this.error = "Missing lawyer ID (role_id) in URL.";
+    // Decode JWT from sessionStorage
+    const token = sessionStorage.getItem('jwt');
+    if (!token) {
+      this.error = 'Not authenticated.';
       return;
     }
-
+    const payload = window.decodeJWT ? window.decodeJWT(token) : JSON.parse(atob(token.split('.')[1]));
+    this.lawyerId = payload && payload.role_id;
+    if (!this.lawyerId) {
+      this.error = 'Missing lawyer ID in token.';
+      return;
+    }
     this.loading = true;
     try {
       const baseUrl = window.API_BASE_URL;
-      const res = await fetch(`${baseUrl}/consultations?lawyer_id=${this.lawyerId}`);
+      const res = await fetch(`${baseUrl}/consultations?lawyer_id=${this.lawyerId}`, {
+        headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }
+      });
       if (!res.ok) throw new Error('Failed to load consultations');
       const consultationsData = await res.json();
-
-      this.consultations = consultationsData.map(c => ({
-        ...c,
-        id: c.id || c.consultation_id
-      }));
-
+      this.consultations = consultationsData.map(c => ({ ...c, id: c.id || c.consultation_id }));
       // Check for reviews for completed consultations
       await Promise.all(this.consultations.map(async (c) => {
         if (c.consultation_status === 'Completed') {
           try {
-            const r = await fetch(`${baseUrl}/api/reviews/consultation/${c.consultation_id || c.id}/client/${c.client_id}`);
-            c._hasReview = r.ok;
-          } catch { c._hasReview = false; }
+            const r = await fetch(`${baseUrl}/api/reviews/consultation/${c.consultation_id || c.id}/client/${c.client_id}`, {
+              headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }
+            });
+            const data = await r.json();
+            c._hasReview = data.exists;
+          } catch {
+            c._hasReview = false; // Network or other error, treat as no review
+          }
         }
       }));
-
       const clientIds = [...new Set(this.consultations.map(c => c.client_id))];
       const clientPromises = clientIds.map(id =>
-        fetch(`${baseUrl}/api/clients/${id}`).then(r => r.ok ? r.json() : null)
+        fetch(`${baseUrl}/api/clients/${id}`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } }).then(r => r.ok ? r.json() : null)
       );
       const clients = await Promise.all(clientPromises);
-
       this.clientsMap = {};
       clientIds.forEach((id, i) => {
         if (clients[i]) this.clientsMap[id] = clients[i];
       });
     } catch (err) {
+      // Only log if the main consultations fetch fails
       console.error(err);
       this.error = 'Failed to load consultation data.';
     } finally {
@@ -90,7 +95,7 @@ const consultation = Vue.createApp({
         const baseUrl = window.API_BASE_URL;
         const res = await fetch(`${baseUrl}/api/consultations-update/${consultationId}`, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') },
           body: JSON.stringify({ consultation_status: newStatus })
         });
         if (!res.ok) throw new Error('Failed to update status');
@@ -139,14 +144,14 @@ const consultation = Vue.createApp({
         const baseUrl = window.API_BASE_URL;
         const updateRes = await fetch(`${baseUrl}/api/consultations-update/${consultationId}`, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') },
           body: JSON.stringify({ consultation_status: 'Completed' })
         });
         if (!updateRes.ok) throw new Error('Failed to update consultation');
 
         const noteRes = await fetch(`${baseUrl}/api/lawyer-notes`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') },
           body: JSON.stringify({
             consultation_id: consultationId,
             note: this.noteText,
@@ -168,7 +173,9 @@ const consultation = Vue.createApp({
     async fetchLawyerNote(consultationId) {
       try {
         const baseUrl = window.API_BASE_URL;
-        const res = await fetch(`${baseUrl}/api/lawyer-notes-view/${consultationId}`);
+        const res = await fetch(`${baseUrl}/api/lawyer-notes-view/${consultationId}`, {
+          headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }
+        });
         if (!res.ok) throw new Error('Failed to fetch note');
         const data = await res.json();
         this.lawyerNote = data;
@@ -205,7 +212,9 @@ const consultation = Vue.createApp({
       this.selectedConsultation = consultation;
       try {
         const baseUrl = window.API_BASE_URL;
-        const res = await fetch(`${baseUrl}/api/lawyer-notes-view/${consultation.id}`);
+        const res = await fetch(`${baseUrl}/api/lawyer-notes-view/${consultation.id}`, {
+          headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }
+        });
         if (!res.ok) throw new Error('Failed to fetch notes');
         this.lawyerNote = await res.json();
       } catch (err) {
@@ -221,12 +230,17 @@ const consultation = Vue.createApp({
     async fetchReviewForConsultation(consultationId, clientId) {
       try {
         const baseUrl = window.API_BASE_URL;
-        const res = await fetch(`${baseUrl}/api/reviews/consultation/${consultationId}/client/${clientId}`);
-        if (res.ok) {
-          this.reviewToShow = await res.json();
-          this.showReviewModal = true;
-        } else {
+        const res = await fetch(`${baseUrl}/api/reviews/consultation/${consultationId}/client/${clientId}`, {
+          headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }
+        });
+        const data = await res.json();
+        if (!data.exists) {
           this.reviewToShow = null;
+          this.showReviewModal = false;
+          alert('No review has been submitted for this consultation yet.');
+        } else {
+          this.reviewToShow = data.review;
+          this.showReviewModal = true;
         }
       } catch {
         this.reviewToShow = null;

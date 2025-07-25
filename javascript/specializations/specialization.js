@@ -8,9 +8,9 @@ createApp({
           <h2>Account Details</h2>
         </div>
         <div class="profile__options">
-          <a :href="'/html/lawyer/profile.html?role_id=' + roleId"><button>Profile Information</button></a>
+          <a :href="'/html/lawyer/profile.html'"><button>Profile Information</button></a>
           <a><button>Lawyer Setup</button></a>
-          <a :href="'/html/lawyer/settings.html?role_id=' + roleId"><button>Change Password</button></a>
+          <a :href="'/html/lawyer/settings.html'"><button>Change Password</button></a>
         </div>
       </section>
 
@@ -117,10 +117,16 @@ createApp({
     };
   },
   async mounted() {
-    const params = new URLSearchParams(window.location.search);
-    this.roleId = params.get('role_id');
+    // Decode JWT from sessionStorage
+    const token = sessionStorage.getItem('jwt');
+    if (!token) {
+      alert('Not authenticated.');
+      return;
+    }
+    const payload = window.decodeJWT ? window.decodeJWT(token) : JSON.parse(atob(token.split('.')[1]));
+    this.roleId = payload && payload.role_id;
     if (!this.roleId) {
-      alert('No lawyer role_id found in URL');
+      alert('No lawyer role_id found in token');
       return;
     }
     await this.fetchSpecializations();
@@ -133,20 +139,20 @@ createApp({
     },
     async fetchSpecializations() {
       const baseUrl = window.API_BASE_URL;
-      const res = await fetch(`${baseUrl}/api/specializations`);
+      const res = await fetch(`${baseUrl}/api/specializations`, {
+        headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }
+      });
       this.specializations = await res.json();
     },
     async fetchExistingSelections() {
       const baseUrl = window.API_BASE_URL;
       const [specsRes, availabilityRes] = await Promise.all([
-        fetch(`${baseUrl}/api/lawyer/${this.roleId}/specializations`),
-        fetch(`${baseUrl}/api/lawyer/${this.roleId}/availability`)
+        fetch(`${baseUrl}/api/lawyer/${this.roleId}/specializations`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } }),
+        fetch(`${baseUrl}/api/lawyer/${this.roleId}/availability`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } })
       ]);
-
       const specs = await specsRes.json();
       this.selectedSpecializations = specs.map(Number);
       this.originalSpecializations = [...this.selectedSpecializations];
-
       const availability = await availabilityRes.json();
       if (availability) {
         this.officeHours = availability;
@@ -154,7 +160,7 @@ createApp({
     },
     async fetchServices() {
       const baseUrl = window.API_BASE_URL;
-      const res = await fetch(`${baseUrl}/api/lawyer/${this.roleId}/services`);
+      const res = await fetch(`${baseUrl}/api/lawyer/${this.roleId}/services`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } });
       const data = await res.json();
       if (data) {
         this.services = data;
@@ -173,12 +179,11 @@ createApp({
       const baseUrl = window.API_BASE_URL;
       const res = await fetch(`${baseUrl}/api/lawyer/${this.roleId}/specializations`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') },
         body: JSON.stringify({
           specializations: this.selectedSpecializations.map(Number)
         })
       });
-
       if (res.ok) {
         alert('Specializations saved.');
         this.originalSpecializations = [...this.selectedSpecializations];
@@ -191,7 +196,7 @@ createApp({
       const baseUrl = window.API_BASE_URL;
       const res = await fetch(`${baseUrl}/api/lawyer/${this.roleId}/availability`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') },
         body: JSON.stringify(this.officeHours)
       });
       if (res.ok) {
@@ -205,7 +210,7 @@ createApp({
       const baseUrl = window.API_BASE_URL;
       const res = await fetch(`${baseUrl}/api/lawyer/${this.roleId}/services`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') },
         body: JSON.stringify(this.services)
       });
       if (res.ok) {

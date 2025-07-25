@@ -46,14 +46,26 @@ const Login = Vue.createApp({
         }
 
         // Success: clear failed attempts (handled by backend), redirect
-        const routeMap = {
-          'Lawyer': `/html/lawyer/search.html?role_id=${data.role_id}`,
-          'Client': `/html/client/search.html?role_id=${data.role_id}`,
-          'PAO-Admin': `/html/PAO-admin/lawyers.html?role_id=${data.role_id}`,
-          'OLBA-Admin': `/html/OLBA-Admin/lawyers.html?role_id=${data.role_id}`,
-          'Secretary': `/html/secretary/search.html?role_id=${data.role_id}`
+        // Store JWT in sessionStorage
+        if (data.token) {
+          sessionStorage.setItem('jwt', data.token);
+        }
+        // Helper to decode JWT (for use in other scripts)
+        window.decodeJWT = function(token) {
+          if (!token) return null;
+          try {
+            const payload = token.split('.')[1];
+            return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+          } catch (e) { return null; }
         };
-
+        // Redirect based on role (no role_id in URL)
+        const routeMap = {
+          'Lawyer': '/html/lawyer/search.html',
+          'Client': '/html/client/search.html',
+          'PAO-Admin': '/html/PAO-admin/lawyers.html',
+          'OLBA-Admin': '/html/OLBA-Admin/lawyers.html',
+          'Secretary': '/html/secretary/search.html'
+        };
         const redirectUrl = routeMap[data.role];
         if (redirectUrl) {
           window.location.href = redirectUrl;

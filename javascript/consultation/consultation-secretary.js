@@ -14,14 +14,18 @@ const consultation = Vue.createApp({
     };
   },
   async mounted() {
-    const urlParams = new URLSearchParams(window.location.search);
-    this.secretaryId = urlParams.get('role_id');
-
-    if (!this.secretaryId) {
-      this.error = "Missing secretary ID (role_id) in URL.";
+    // Decode JWT from sessionStorage
+    const token = sessionStorage.getItem('jwt');
+    if (!token) {
+      this.error = 'Not authenticated.';
       return;
     }
-
+    const payload = window.decodeJWT ? window.decodeJWT(token) : JSON.parse(atob(token.split('.')[1]));
+    this.secretaryId = payload && payload.role_id;
+    if (!this.secretaryId) {
+      this.error = 'Missing secretary ID in token.';
+      return;
+    }
     await this.fetchApprovedLawyers();
   },
   methods: {
@@ -29,7 +33,9 @@ const consultation = Vue.createApp({
       this.loading = true;
       try {
         const baseUrl = window.API_BASE_URL;
-        const res = await fetch(`${baseUrl}/api/secretary-lawyers-view/${this.secretaryId}`);
+        const res = await fetch(`${baseUrl}/api/secretary-lawyers-view/${this.secretaryId}`, {
+          headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }
+        });
         if (!res.ok) throw new Error('Failed to fetch lawyers.');
         const data = await res.json();
 
@@ -57,7 +63,9 @@ const consultation = Vue.createApp({
       this.error = null;
       try {
         const baseUrl = window.API_BASE_URL;
-        const res = await fetch(`${baseUrl}/consultations?lawyer_id=${this.selectedLawyerId}`);
+        const res = await fetch(`${baseUrl}/consultations?lawyer_id=${this.selectedLawyerId}`, {
+          headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }
+        });
         if (!res.ok) throw new Error('Failed to load consultations');
         const consultationsData = await res.json();
 
@@ -68,7 +76,7 @@ const consultation = Vue.createApp({
 
         const clientIds = [...new Set(this.consultations.map(c => c.client_id))];
         const clientPromises = clientIds.map(id =>
-          fetch(`${baseUrl}/api/clients/${id}`).then(r => r.ok ? r.json() : null)
+          fetch(`${baseUrl}/api/clients/${id}`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } }).then(r => r.ok ? r.json() : null)
         );
         const clients = await Promise.all(clientPromises);
 
@@ -101,7 +109,7 @@ const consultation = Vue.createApp({
         const baseUrl = window.API_BASE_URL;
         const res = await fetch(`${baseUrl}/api/consultations-update/${consultationId}`, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') },
           body: JSON.stringify({ consultation_status: newStatus })
         });
         if (!res.ok) throw new Error('Failed to update status');

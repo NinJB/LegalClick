@@ -41,15 +41,20 @@ const clientProfile = Vue.createApp({
     }
   },
   async created() {
-    const params = new URLSearchParams(window.location.search);
-    this.roleId = params.get('role_id');
-
+    // Decode JWT from sessionStorage
+    const token = sessionStorage.getItem('jwt');
+    if (!token) {
+      this.error = 'Not authenticated.';
+      return;
+    }
+    const payload = window.decodeJWT ? window.decodeJWT(token) : JSON.parse(atob(token.split('.')[1]));
+    this.roleId = payload && payload.role_id;
     const baseUrl = window.API_BASE_URL;
-    const res = await fetch(`${baseUrl}/api/client/by-role/${this.roleId}`);
+    const res = await fetch(`${baseUrl}/api/client/by-role/${this.roleId}`, {
+      headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }
+    });
     const data = await res.json();
-
     this.client = data;
-
     // Populate form fields with the client's data
     this.form.username = data.username;
     this.form.marital_status = data.marital_status;
@@ -105,7 +110,10 @@ const clientProfile = Vue.createApp({
       const baseUrl = window.API_BASE_URL;
       const response = await fetch(`${baseUrl}/api/client/update/${this.client.client_id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + sessionStorage.getItem('jwt')
+        },
         body: JSON.stringify(updateData)
       });
 
@@ -138,7 +146,7 @@ const clientProfile = Vue.createApp({
 
         <div class="profile__options">
           <a><button>Profile Information</button></a>
-          <a :href="'/html/client/settings.html?role_id=' + roleId"><button>Change Password</button></a>
+          <a href="/html/client/settings.html"><button>Change Password</button></a>
         </div>
       </section>
 

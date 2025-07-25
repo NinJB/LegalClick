@@ -66,7 +66,7 @@ const lawyerManagement = Vue.createApp({
     methods: {
         fetchLawyers() {
         const baseUrl = window.API_BASE_URL;
-        fetch(`${baseUrl}/api/public-lawyers`)
+        fetch(`${baseUrl}/api/public-lawyers`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } })
             .then(response => response.json())
             .then(data => {
             this.lawyers = data;
@@ -83,7 +83,7 @@ const lawyerManagement = Vue.createApp({
         },
         fetchConsultations(lawyerId) {
             const baseUrl = window.API_BASE_URL;
-            fetch(`${baseUrl}/api/lawyers/${lawyerId}/consultations`)
+            fetch(`${baseUrl}/api/lawyers/${lawyerId}/consultations`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } })
                 .then(response => response.json())
                 .then(data => {
                 this.consultations = data;
@@ -94,7 +94,7 @@ const lawyerManagement = Vue.createApp({
         },
         fetchLogs(lawyerId) {
             const baseUrl = window.API_BASE_URL;
-            fetch(`${baseUrl}/api/lawyers/${lawyerId}/logs`)
+            fetch(`${baseUrl}/api/lawyers/${lawyerId}/logs`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } })
                 .then(response => response.json())
                 .then(data => {
                 this.logs = data;
@@ -138,6 +138,7 @@ const lawyerManagement = Vue.createApp({
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + sessionStorage.getItem('jwt')
                 },
                 body: JSON.stringify({ account_status: status }),
             });

@@ -97,58 +97,53 @@ const ConsultationForm = {
     // Fetch specializations first
     try {
       const baseUrl = window.API_BASE_URL;
-      const specRes = await fetch(`${baseUrl}/api/specializations`);
+      const specRes = await fetch(`${baseUrl}/api/specializations`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } });
       if (!specRes.ok) throw new Error('Failed to load specializations');
       this.specializations = await specRes.json();
     } catch (e) {
       console.error(e);
       alert('Failed to load consultation categories.');
     }
-
+    // Decode JWT from sessionStorage for client_id
+    const token = sessionStorage.getItem('jwt');
+    let clientId = null;
+    if (token) {
+      const payload = window.decodeJWT ? window.decodeJWT(token) : JSON.parse(atob(token.split('.')[1]));
+      clientId = payload && payload.role_id;
+    }
     const urlParams = new URLSearchParams(window.location.search);
     const lawyerId = urlParams.get('lawyer_id');
-    const clientId = urlParams.get('client_id');
-
     if (!lawyerId || !clientId) {
-      alert('Missing lawyer or client ID in URL.');
+      alert('Missing lawyer or client ID.');
       return;
     }
-
     this.form.lawyer_id = lawyerId;
     this.form.client_id = clientId;
-
     try {
       const baseUrl = window.API_BASE_URL;
       const [lawyerRes, clientRes, availabilityRes, servicesRes] = await Promise.all([
-        fetch(`${baseUrl}/api/lawyers/${lawyerId}`),
-        fetch(`${baseUrl}/api/clients/${clientId}`),
-        fetch(`${baseUrl}/api/lawyer_availability/${lawyerId}`),
-        fetch(`${baseUrl}/api/lawyer_services/${lawyerId}`)
+        fetch(`${baseUrl}/api/lawyers/${lawyerId}`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } }),
+        fetch(`${baseUrl}/api/clients/${clientId}`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } }),
+        fetch(`${baseUrl}/api/lawyer_availability/${lawyerId}`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } }),
+        fetch(`${baseUrl}/api/lawyer_services/${lawyerId}`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } })
       ]);
-
       if (!lawyerRes.ok || !clientRes.ok || !availabilityRes.ok || !servicesRes.ok) {
         alert('Error loading consultation form data.');
         return;
       }
-
       this.lawyer = await lawyerRes.json();
       this.client = await clientRes.json();
       const availability = await availabilityRes.json();
       this.service = await servicesRes.json();
-
       const today = new Date();
-
       const minDate = new Date(today);
       minDate.setDate(today.getDate() + 3);
       this.minConsultationDate = minDate.toISOString().split("T")[0];
-
       const maxDate = new Date(today);
       maxDate.setDate(today.getDate() + 30);
       this.maxConsultationDate = maxDate.toISOString().split("T")[0];
-
       this.timeStart = availability.morning_start;
       this.timeEnd = availability.evening_end;
-
       this.calculateFee();
     } catch (err) {
       console.error(err);
@@ -172,9 +167,7 @@ const ConsultationForm = {
         alert("Consultation fee is missing or zero. Please select a valid consultation duration.");
         return;
       }
-
       const formData = new FormData();
-
       formData.append('client_id', this.form.client_id);
       formData.append('lawyer_id', this.form.lawyer_id);
       formData.append('consultation_category', this.form.consultation_category);
@@ -185,17 +178,16 @@ const ConsultationForm = {
       formData.append('consultation_fee', this.form.consultation_fee);
       formData.append('consultation_mode', this.form.consultation_mode);
       formData.append('payment_mode', this.form.payment_mode);
-
       try {
         const baseUrl = window.API_BASE_URL;
         const res = await fetch(`${baseUrl}/api/consultation`, {
           method: 'POST',
           body: formData,
+          headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }
         });
-
         if (res.ok) {
           alert('Consultation request submitted successfully.');
-          window.location.href = `/html/client/search.html?role_id=${encodeURIComponent(this.form.client_id)}`;
+          window.location.href = `/html/client/search.html`;
         } else {
           alert('Submission failed.');
         }

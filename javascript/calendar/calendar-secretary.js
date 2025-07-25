@@ -110,15 +110,21 @@ const calendarSecretaryApp = Vue.createApp({
         async fetchApprovedLawyers() {
             this.loading = true;
             try {
-                const urlParams = new URLSearchParams(window.location.search);
-                this.secretaryId = urlParams.get('role_id');
+                // Decode JWT from sessionStorage
+                const token = sessionStorage.getItem('jwt');
+                let secretaryId = null;
+                if (token) {
+                  const payload = window.decodeJWT ? window.decodeJWT(token) : JSON.parse(atob(token.split('.')[1]));
+                  secretaryId = payload && payload.role_id;
+                }
+                this.secretaryId = secretaryId;
                 if (!this.secretaryId) {
-                    this.error = "Missing secretary ID (role_id) in URL.";
+                    this.error = "Missing secretary ID in token.";
                     this.loading = false;
                     return;
                 }
                 const baseUrl = window.API_BASE_URL;
-                const res = await fetch(`${baseUrl}/api/secretary-lawyers-view/${this.secretaryId}`);
+                const res = await fetch(`${baseUrl}/api/secretary-lawyers-view/${this.secretaryId}`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } });
                 if (!res.ok) throw new Error('Failed to fetch lawyers.');
                 const data = await res.json();
                 this.approvedLawyers = data.filter(l => l.work_status === 'Approved');
@@ -141,13 +147,13 @@ const calendarSecretaryApp = Vue.createApp({
             this.error = null;
             try {
                 const baseUrl = window.API_BASE_URL;
-                const res = await fetch(`${baseUrl}/consultations?lawyer_id=${this.selectedLawyerId}`);
+                const res = await fetch(`${baseUrl}/consultations?lawyer_id=${this.selectedLawyerId}`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } });
                 if (!res.ok) throw new Error('Failed to load consultations');
                 const consultations = await res.json();
                 const upcoming = consultations.filter(c => c.consultation_status === 'Upcoming');
                 // Fetch client names for each consultation
                 const clientIds = [...new Set(upcoming.map(c => c.client_id))];
-                const clientPromises = clientIds.map(id => fetch(`${baseUrl}/api/clients/${id}`));
+                const clientPromises = clientIds.map(id => fetch(`${baseUrl}/api/clients/${id}`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } }));
                 const clientResponses = await Promise.all(clientPromises);
                 const clients = {};
                 for (let i = 0; i < clientIds.length; i++) {
@@ -237,7 +243,7 @@ const calendarSecretaryApp = Vue.createApp({
             this.validRescheduleTimes = [];
             try {
                 const baseUrl = window.API_BASE_URL;
-                const res = await fetch(`${baseUrl}/api/lawyer_availability/${consultation.lawyer_id || this.selectedLawyerId}`);
+                const res = await fetch(`${baseUrl}/api/lawyer_availability/${consultation.lawyer_id || this.selectedLawyerId}`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') } });
                 if (res.ok) {
                     this.lawyerAvailability = await res.json();
                     this.validRescheduleTimes = this.generateValidTimes(this.lawyerAvailability);
@@ -294,7 +300,7 @@ const calendarSecretaryApp = Vue.createApp({
                 const baseUrl = window.API_BASE_URL;
                 const res = await fetch(`${baseUrl}/api/consultations-reschedule/${this.rescheduleConsultationId}`, {
                     method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') },
                     body: JSON.stringify({
                         consultation_date: this.rescheduleDate,
                         consultation_time: this.rescheduleTime

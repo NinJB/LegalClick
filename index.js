@@ -1,3 +1,5 @@
+(async () => {
+
 const express = require('express');
 const cors = require('cors');
 const client = require('./connection');
@@ -7,8 +9,9 @@ const app = express();
 const { DateTime } = require('luxon');
 const bcrypt = require('bcrypt');
 const { hashPassword } = require('./hash-passwords');
-const open = require('open').default;
 const cron = require('node-cron');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key';
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -132,8 +135,17 @@ app.post('/api/login', async (req, res) => {
   
       await logTrail(user.role, user.role_id, 'Log In', 'Successful');
   
-      // Respond with user role and status
+      // Issue JWT
+      const token = jwt.sign({
+        user_id: user.user_id,
+        role: user.role,
+        role_id: user.role_id,
+        username: user.username
+      }, JWT_SECRET, { expiresIn: '8h' });
+  
+      // Respond with JWT and user info
       res.json({
+        token,
         role: user.role,
         status: user.status,
         role_id: user.role_id
@@ -165,6 +177,91 @@ app.post('/api/login', async (req, res) => {
       console.error('Error logging trail:', err);
     }
 }
+
+// JWT authentication middleware
+function authenticateJWT(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader) return res.status(401).json({ message: 'Missing Authorization header' });
+  const token = authHeader.split(' ')[1];
+  if (!token) return res.status(401).json({ message: 'Missing token' });
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ message: 'Invalid or expired token' });
+    req.user = user;
+    next();
+  });
+}
+
+// Add this helper to DRY up middleware usage
+const protected = [
+  // All routes that need authentication
+  // GET
+  ['/api/lawyers', 'get'],
+  ['/api/lawyer/by-role/:roleId', 'get'],
+  ['/api/client/by-role/:roleId', 'get'],
+  ['/api/admin/by-role/:roleId', 'get'],
+  ['/api/specializations', 'get'],
+  ['/api/lawyer/:id/specializations', 'get'],
+  ['/api/lawyer/:id/availability', 'get'],
+  ['/api/lawyer/:roleId/services', 'get'],
+  ['/api/lawyer-details/:lawyerId', 'get'],
+  ['/api/lawyers/:lawyerId', 'get'],
+  ['/api/clients/:roleId', 'get'],
+  ['/api/lawyer_availability/:lawyerId', 'get'],
+  ['/api/lawyer_services/:lawyerId', 'get'],
+  ['/api/consultations', 'get'],
+  ['/consultations', 'get'],
+  ['/api/lawyer-services', 'get'],
+  ['/api/admins/role/:adminId', 'get'],
+  ['/api/view-specializations', 'get'],
+  ['/api/lawyers/:lawyerId/consultations', 'get'],
+  ['/api/lawyers/:lawyerId/logs', 'get'],
+  ['/api/check-secretary-lawyers', 'get'],
+  ['/api/secretary/by-role/:role_id', 'get'],
+  ['/api/secretary/:id/requests', 'get'],
+  ['/api/lawyer/:lawyer_id/requests', 'get'],
+  ['/api/secretary-lawyers-view/:secretaryId', 'get'],
+  ['/api/lawyer-notes-view/:consultation_id', 'get'],
+  ['/api/lawyer/:lawyerId/reviews', 'get'],
+  ['/api/reviews/consultation/:consultation_id/client/:client_id', 'get'],
+  ['/api/notifications/client', 'get'],
+  ['/api/notifications/lawyer', 'get'],
+  ['/api/notifications/secretary', 'get'],
+  ['/api/payments/proof/:payment_id', 'get'],
+  ['/api/payments/receipt/:consultation_id', 'get'],
+  // POST
+  ['/api/check-username', 'post'],
+  ['/api/lawyer/:role_id/specializations', 'post'],
+  ['/api/lawyer/:id/availability', 'post'],
+  ['/api/lawyer/:roleId/services', 'post'],
+  ['/api/lawyer/upload-profile-picture/:lawyer_id', 'post'],
+  ['/api/consultation', 'post'],
+  ['/api/add-admin', 'post'],
+  ['/api/add-specializations', 'post'],
+  ['/api/secretary-lawyers', 'post'],
+  ['/api/consultations-update/:id', 'post'],
+  ['/api/lawyer-notes', 'post'],
+  ['/api/reviews', 'post'],
+  ['/api/payments/upload', 'post'],
+  ['/api/payments/confirm', 'post'],
+  ['/api/consultations/complete-paid/:consultation_id', 'post'],
+  // PUT
+  ['/api/lawyer/update/:lawyerId', 'put'],
+  ['/api/client/update/:client_id', 'put'],
+  ['/api/admin/update/:adminId', 'put'],
+  ['/api/secretary/update/:secretary_id', 'put'],
+  ['/api/secretary/requests/:work_id', 'put'],
+  ['/api/reviews/:review_id', 'put'],
+  // PATCH
+  ['/api/consultations-update/:consultation_id', 'patch'],
+  ['/api/consultations-reschedule/:consultation_id', 'patch'],
+  ['/api/notifications/:notification_id/read', 'patch'],
+  // DELETE
+  ['/api/delete-specializations/:id', 'delete'],
+  ['/api/secretary/requests/:work_id', 'delete'],
+];
+protected.forEach(([route, method]) => {
+  app[method](route, authenticateJWT);
+});
 
 // GET all lawyers
 app.get('/api/public-lawyers', (req, res) => {
@@ -2079,9 +2176,10 @@ app.get('/api/reviews/consultation/:consultation_id/client/:client_id', async (r
       [consultation_id, client_id]
     );
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Review not found' });
+      // Return 200 with a custom payload instead of 404
+      return res.json({ exists: false, review: null });
     }
-    res.json(result.rows[0]);
+    res.json({ exists: true, review: result.rows[0] });
   } catch (err) {
     console.error('Error fetching review:', err);
     res.status(500).json({ error: 'Failed to fetch review' });
@@ -2358,5 +2456,6 @@ app.patch('/api/notifications/:notification_id/read', async (req, res) => {
 // Start the server
 app.listen(5500, () => {
   console.log("Server running on port 5500");
-  open(`http://localhost:${5500}`);
 });
+
+})();

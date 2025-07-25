@@ -33,20 +33,24 @@ const profile = Vue.createApp({
     };
   },
   async created() {
-    const params = new URLSearchParams(window.location.search);
-    this.roleId = params.get('role_id'); // Get role_id from the URL
-
+    // Decode JWT from sessionStorage
+    const token = sessionStorage.getItem('jwt');
+    if (!token) {
+      this.error = 'Not authenticated.';
+      return;
+    }
+    const payload = window.decodeJWT ? window.decodeJWT(token) : JSON.parse(atob(token.split('.')[1]));
+    this.roleId = payload && payload.role_id;
     const baseUrl = window.API_BASE_URL;
     // Fetch the lawyer details using the role_id
-    const res = await fetch(`${baseUrl}/api/lawyer/by-role/${this.roleId}`);
+    const res = await fetch(`${baseUrl}/api/lawyer/by-role/${this.roleId}`, {
+      headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }
+    });
     const data = await res.json();
-
     // Log the data to check if profile_picture is correctly received
     console.log('Fetched lawyer data:', data);
-
     // Populate lawyer data
     this.lawyer = data;
-
     // Initialize form fields
     this.form.username = data.username;
     this.form.last_name = data.last_name;
@@ -169,8 +173,8 @@ const profile = Vue.createApp({
 
         <div class="profile__options">
           <a><button>Profile Information</button></a>
-          <a :href="'/html/lawyer/specialization.html?role_id=' + roleId"><button>Lawyer Setup</button></a>
-          <a :href="'/html/lawyer/settings.html?role_id=' + roleId"><button>Change Password</button></a>
+          <a href="/html/lawyer/specialization.html"><button>Lawyer Setup</button></a>
+          <a href="/html/lawyer/settings.html"><button>Change Password</button></a>
         </div>
       </section>
       

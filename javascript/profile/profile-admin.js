@@ -24,8 +24,17 @@ const adminProfile = Vue.createApp({
       };
     },
     async created() {
-      this.roleId = new URLSearchParams(window.location.search).get('role_id');
-      const res = await fetch(`${window.API_BASE_URL}/api/admin/by-role/${this.roleId}`);
+      // Decode JWT from sessionStorage
+      const token = sessionStorage.getItem('jwt');
+      if (!token) {
+        this.roleId = null;
+        return;
+      }
+      const payload = window.decodeJWT ? window.decodeJWT(token) : JSON.parse(atob(token.split('.')[1]));
+      this.roleId = payload && payload.role_id;
+      const res = await fetch(`${window.API_BASE_URL}/api/admin/by-role/${this.roleId}`, {
+        headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }
+      });
       const data = await res.json();
       this.admin = data;
       Object.assign(this.form, {
@@ -41,7 +50,7 @@ const adminProfile = Vue.createApp({
         if (this.form.username === this.admin.username) return this.usernameError = false;
         const res = await fetch(`${window.API_BASE_URL}/api/check-username`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') },
           body: JSON.stringify({ 
             username: this.form.username,
             role_id: this.roleId
@@ -55,7 +64,7 @@ const adminProfile = Vue.createApp({
         const upd = { ...this.form };
         const res = await fetch(`${window.API_BASE_URL}/api/admin/update/${this.admin.admin_id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') },
           body: JSON.stringify(upd)
         });
         if (!res.ok) return alert('Update failed');
@@ -77,7 +86,7 @@ const adminProfile = Vue.createApp({
 
           <div class="profile__options">
             <a><button>Profile Information</button></a>
-            <a :href="'/html/admins/settings.html?role_id=' + roleId"><button>Change Password</button></a>
+            <a href="/html/admins/settings.html"><button>Change Password</button></a>
           </div>
         </section>
         
