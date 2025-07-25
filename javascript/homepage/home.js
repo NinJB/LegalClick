@@ -38,6 +38,53 @@ const home = Vue.createApp({
                     <h1 class="homepage__text">TO DELIVER PROFESSIONAL & TRUSTWORTHY LEGAL SERVICES</h1>
                 </div>
             </div>
+
+            <div class="homepage__information--wrapper">
+            <div class="box">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+            <div class="homepage__information">
+                <div class="homepage__information--container">
+                    <h1 class="homepage__title--about">About LegalClick</h1>
+                    <p class="homepage__text--about">LegalClick aims to make legal solutions more accessible and efficient by connecting individuals with trusted legal professionals online.</p>
+                    <div class="homepage__info">
+                        <h3 class="homepage__subtitle--about">Our Mission</h3>
+                        <ul>
+                            <li>We bridge the gap between clients and legal professionals through this innovative digital platform.</li>
+                            <li>Empower individuals and communities by making legal solutions more accessible and efficient.</li>
+                            <li>Assist clients through AI in selecting licensed Attorneys in Ormoc City.</li>
+                        </ul>
+                    </div>
+                    <div class="homepage__info">
+                        <h3 class="homepage__subtitle--about">Our Vision</h3>
+                        <ul>
+                            <li>We envision a future where everyone—regardless of location or background—can connect with trusted legal professionals instantly, confidently, and securely.</li>
+                            <li>To be the first digital platform revolutionizing access to legal services within Ormoc City.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>Who is LegalClick for?</h3>
+                        <div class="homepage__users">
+                            <div class="homepage__people">Citizens</div>
+                            <div class="homepage__people">Lawyers</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="homepage__information--container">
+                    <img src="/images/map-ormoc.jpg" class="map-image">
+                </div>
+            </div>
+            </div>
         </div>
 
         <footer>
