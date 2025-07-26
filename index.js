@@ -17,7 +17,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key';
 app.use(express.static(__dirname));
 
 // Fallback to index.html for any route
-app.get('*', (req, res) => {
+app.get('/', (req, res) => {
   res.sendFile(mypath.join(__dirname, 'index.html'));
 });
 
