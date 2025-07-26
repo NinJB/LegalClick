@@ -134,7 +134,7 @@ const lawyerManagement = Vue.createApp({
                 return;
             }
             const baseUrl = window.API_BASE_URL;
-            await fetch(`${baseUrl}/private-lawyers/${lawyer_id}/status`, {
+            await fetch(`${baseUrl}/api/private-lawyers/${lawyer_id}/status`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

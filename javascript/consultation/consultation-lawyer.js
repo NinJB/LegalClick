@@ -34,7 +34,7 @@ const consultation = Vue.createApp({
     this.loading = true;
     try {
       const baseUrl = window.API_BASE_URL;
-      const res = await fetch(`${baseUrl}/consultations?lawyer_id=${this.lawyerId}`, {
+      const res = await fetch(`${baseUrl}/api/consultations-lawyer?lawyer_id=${this.lawyerId}`, {
         headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }
       });
       if (!res.ok) throw new Error('Failed to load consultations');

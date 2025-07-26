@@ -208,8 +208,8 @@ const protected = [
   ['/api/clients/:roleId', 'get'],
   ['/api/lawyer_availability/:lawyerId', 'get'],
   ['/api/lawyer_services/:lawyerId', 'get'],
-  ['/api/consultations', 'get'],
-  ['/consultations', 'get'],
+  ['/api/consultations-client', 'get'],
+  ['/api/consultations-lawyer', 'get'],
   ['/api/lawyer-services', 'get'],
   ['/api/admins/role/:adminId', 'get'],
   ['/api/view-specializations', 'get'],
@@ -284,7 +284,7 @@ app.get('/api/public-lawyers', (req, res) => {
 });
 
 // PUT update lawyer's account status
-app.put('/public-lawyers/:lawyer_id/status', async (req, res) => {
+app.put('/api/public-lawyers/:lawyer_id/status', async (req, res) => {
   const { lawyer_id } = req.params;
   const { account_status } = req.body;
 
@@ -336,7 +336,7 @@ app.get('/api/private-lawyers', (req, res) => {
 });
 
 // PUT update private lawyer's account status
-app.put('/private-lawyers/:lawyer_id/status', async (req, res) => {
+app.put('/api/private-lawyers/:lawyer_id/status', async (req, res) => {
   const { lawyer_id } = req.params;
   const { account_status } = req.body;
 
@@ -373,7 +373,7 @@ app.put('/private-lawyers/:lawyer_id/status', async (req, res) => {
 });
 
 // Get list of clients (for reference)
-app.post('/signup', upload.single('attorney_license'), async (req, res) => {
+app.post('/api/signup', upload.single('attorney_license'), async (req, res) => {
   const {
     roll_number,
     username,
@@ -479,7 +479,7 @@ app.post('/signup', upload.single('attorney_license'), async (req, res) => {
   }
 });
 
-app.post('/signup-clients', upload.single('national_id'), async (req, res) => {
+app.post('/api/signup-clients', upload.single('national_id'), async (req, res) => {
   const {
     username,
     first_name,
@@ -1445,7 +1445,7 @@ app.post('/api/consultation', upload.none(), async (req, res) => {
   }
 });
 
-app.get('/api/consultations', async (req, res) => {
+app.get('/api/consultations-client', async (req, res) => {
   const clientId = req.query.client_id;
   console.log('Received client_id:', clientId);
 
@@ -1470,7 +1470,7 @@ app.get('/api/consultations', async (req, res) => {
   }
 });
 
-app.get('/consultations', async (req, res) => {
+app.get('/api/consultations-lawyer', async (req, res) => {
   try {
     const { lawyer_id } = req.query;
     if (!lawyer_id) {
