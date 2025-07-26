@@ -1,6 +1,7 @@
 (async () => {
 
 const express = require('express');
+const mypath = require('path');
 const cors = require('cors');
 const client = require('./connection');
 const multer = require('multer');
@@ -12,6 +13,13 @@ const { hashPassword } = require('./hash-passwords');
 const cron = require('node-cron');
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key';
+
+app.use(express.static(__dirname));
+
+// Fallback to index.html for any route
+app.get('*', (req, res) => {
+  res.sendFile(mypath.join(__dirname, 'index.html'));
+});
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
